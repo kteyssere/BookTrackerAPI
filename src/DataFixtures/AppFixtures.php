@@ -6,20 +6,34 @@ use App\Entity\Author;
 use App\Entity\Book;
 use App\Entity\Genre;
 use App\Entity\ListBook;
+use App\Entity\Persona;
+use App\Entity\User;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
 use Faker\Generator;
+use Syfmony\Component\PasswordHasher\Hasher\UserPasswordInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+
 class AppFixtures extends Fixture
 {
+   /**
+     * Hasher de mot de passe
+     *
+     * @var UserPasswordHasherInterface
+     */
+    private $userPasswordHasher;
+
     /**
      * @var Generator
      */
     private Generator $faker;
 
-    public function __construct(){
+    public function __construct(UserPasswordHasherInterface $userPasswordHasher){
+        $paramName = "userPasswordHasher";
         $this->faker = Factory::create('fr_FR');
+        $this->$paramName = $userPasswordHasher;
     }
 
     /**
@@ -30,6 +44,68 @@ class AppFixtures extends Fixture
      */
     public function load(ObjectManager $manager): void
     {
+
+        $personas = [];
+        for ($i=0; $i < 10; $i++) { 
+        $gender = random_int( 0, 1);
+    $genderStr = $gender ? 'male' : "female";
+    $persona = new Persona();
+    $birthdateStart =  new \DateTime("01/01/1980");
+    $birthdateEnd = new \DateTime("01/01/2000");
+    $birthDate = $this->faker->dateTimeBetween($birthdateStart,$birthdateEnd);
+       $created = $this->faker->dateTimeBetween("-1 week", "now");
+        $updated = $this->faker->dateTimeBetween($created, "now");
+    $persona
+    ->setPhone($this->faker->e164PhoneNumber())
+    ->setGender($gender)
+    ->setName($this->faker->lastName($genderStr))
+    ->setSurname($this->faker->firstName($genderStr))
+    ->setEmail($this->faker->email())
+    ->setBirthdate( $birthDate)
+    ->setAnonymous(false)
+    ->setStatus("on")
+    ->setCreatedAt($created)
+    ->setUpdatedAt($updated);
+
+    $manager->persist($persona);
+    $personas[] = $persona;
+    }
+
+    $users = [];
+
+    //Set Public User
+    $publicUser = new User();
+    $publicUser->setUsername("public");
+    $publicUser->setRoles(["PUBLIC"]);
+    $publicUser->setPassword($this->userPasswordHasher->hashPassword($publicUser, "public"));
+    $publicUser->setPersona($personas[array_rand($personas, 1)]);
+    $manager->persist($publicUser);
+    $users[] = $publicUser;
+
+
+    for ($i = 0; $i < 5; $i++) {
+        $userUser = new User();
+        $password = $this->faker->password(2, 6);
+        $userUser->setUsername($this->faker->userName() . "@". $password);
+        $userUser->setRoles(["USER"]);
+        $userUser->setPassword($this->userPasswordHasher->hashPassword($userUser, $password));
+        $userUser->setPersona($personas[array_rand($personas, 1)]);
+        
+        $manager->persist($userUser);
+        $users[] = $userUser;
+    }
+    
+        // Admins
+    $adminUser = new User();
+    $adminUser->setUsername("admin");
+    $adminUser->setRoles(["ADMIN"]);
+    $adminUser->setPassword($this->userPasswordHasher->hashPassword($adminUser, "password"));
+    $adminUser->setPersona($personas[array_rand($personas, 1)]);
+    $manager->persist($adminUser);
+    $users[] = $adminUser;
+
+
+       
         $bookTb  = [];
 
         // $product = new Product();

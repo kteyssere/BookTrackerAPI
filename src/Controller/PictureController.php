@@ -38,7 +38,7 @@ class PictureController extends AbstractController
      * @param UrlGeneratorInterface $urlgenerator
      * @return JsonResponse
      */
-    #[Route('/api/picture', name: 'picture.create', methods: ['POST'])]
+    #[Route('/api/picture', name: 'picture.post', methods: ['POST'])]
     public function createPicture(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator): JsonResponse
     {
         $picture = new Picture();

@@ -12,6 +12,32 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 use Symfony\Component\Validator\Constraints as Assert;
+use Hateoas\Configuration\Annotation as Hateoas;
+/**
+ * @Hateoas\Relation(
+ *      "self",
+ *      href = @Hateoas\Route(
+ *          "book.get",
+ *          parameters = { "idBook" = "expr(object.getId())" }
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="getAllBook"),
+ * )
+ * @Hateoas\Relation(
+ *     "up",
+ *      href = @Hateoas\Route(
+ *          "book.getAll"
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="getAllBook")
+ * )
+ * @Hateoas\Relation(
+ *     "update",
+ *      href = @Hateoas\Route(
+ *          "book.update",
+ *          parameters = { "idBook" = "expr(object.getId())" }
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="getAllBook")
+ * )
+ */
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 class Book
