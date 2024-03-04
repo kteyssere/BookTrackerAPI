@@ -49,6 +49,7 @@ class Persona
     #[ORM\OneToMany(mappedBy: 'persona', targetEntity: User::class)]
     private Collection $user;
 
+
     public function __construct()
     {
         $this->user = new ArrayCollection();
@@ -208,4 +209,5 @@ class Persona
 
         return $this;
     }
+
 }

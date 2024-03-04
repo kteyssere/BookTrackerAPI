@@ -49,10 +49,10 @@ class Book
 
     #[ORM\Column(length: 255)]
     #[Groups(["getAll"])]
-    #[Assert\NotBlank(message:"Un Livre doit avoir un nom")]
-    #[Assert\NotNull(message:"Un Livre doit avoir un nom")]
-    #[Assert\Length(min:5, minMessage: "Le nom d'un Livre doit forcement faire plus de {{limit}} characteres")]
-    private ?string $name = null;
+    #[Assert\NotBlank(message:"Un Livre doit avoir un titre")]
+    #[Assert\NotNull(message:"Un Livre doit avoir un titre")]
+    #[Assert\Length(min:5, minMessage: "Le titre d'un Livre doit forcement faire plus de {{limit}} characteres")]
+    private ?string $title = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(["getAll"])]
@@ -72,7 +72,7 @@ class Book
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(["getAll"])]
-    private ?string $synopsis = null;
+    private ?string $description = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
@@ -93,9 +93,25 @@ class Book
     #[Groups(["getAll"])]
     private Collection $authors;
 
+    #[ORM\OneToMany(mappedBy: 'Book', targetEntity: Review::class)]
+    #[Groups(["getAll"])]
+    private Collection $reviews;
+
+    #[ORM\Column(length: 255)]
+    #[Groups(["getAll"])]
+    #[Assert\NotBlank(message:"Un Livre doit avoir un ISBN")]
+    #[Assert\NotNull(message:"Un Livre doit avoir un ISBN")]
+    #[Assert\Length(min:10, minMessage: "L'ISBN d'un Livre doit forcement faire plus de {{limit}} characteres")]
+    private ?string $ISBN = null;
+
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[Groups(["getAll"])]
+    private ?Picture $coverImage = null;
+
     public function __construct()
     {
         $this->authors = new ArrayCollection();
+        $this->reviews = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -103,14 +119,14 @@ class Book
         return $this->id;
     }
 
-    public function getName(): ?string
+    public function getTitle(): ?string
     {
-        return $this->name;
+        return $this->title;
     }
 
-    public function setName(string $name): static
+    public function setTitle(string $title): static
     {
-        $this->name = $name;
+        $this->title = $title;
 
         return $this;
     }
@@ -163,14 +179,14 @@ class Book
         return $this;
     }
 
-    public function getSynopsis(): ?string
+    public function getDescription(): ?string
     {
-        return $this->synopsis;
+        return $this->description;
     }
 
-    public function setSynopsis(string $synopsis): static
+    public function setDescription(string $description): static
     {
-        $this->synopsis = $synopsis;
+        $this->description = $description;
 
         return $this;
     }
@@ -246,6 +262,60 @@ class Book
         if ($this->authors->removeElement($author)) {
             $author->removeBook($this);
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Review>
+     */
+    public function getReviews(): Collection
+    {
+        return $this->reviews;
+    }
+
+    public function addReview(Review $review): static
+    {
+        if (!$this->reviews->contains($review)) {
+            $this->reviews->add($review);
+            $review->setBook($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReview(Review $review): static
+    {
+        if ($this->reviews->removeElement($review)) {
+            // set the owning side to null (unless already changed)
+            if ($review->getBook() === $this) {
+                $review->setBook(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getISBN(): ?string
+    {
+        return $this->ISBN;
+    }
+
+    public function setISBN(string $ISBN): static
+    {
+        $this->ISBN = $ISBN;
+
+        return $this;
+    }
+
+    public function getCoverImage(): ?Picture
+    {
+        return $this->coverImage;
+    }
+
+    public function setCoverImage(?Picture $coverImage): static
+    {
+        $this->coverImage = $coverImage;
 
         return $this;
     }

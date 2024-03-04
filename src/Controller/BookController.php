@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\Book;
 use App\Repository\BookRepository;
+use App\Entity\Picture;
+use App\Repository\PictureRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\IsGranted;
@@ -42,6 +44,21 @@ class BookController extends AbstractController
         ->setCreatedAt($dateNow)
         ->setUpdatedAt($dateNow);
 
+        $picture = new Picture();
+        $file = $request->files->get('file');
+        
+        $picture->setFile($file);
+        $picture->setMimeType($file->getClientMimeType());
+        $picture->setRealName($file->getClientOriginalName());
+        $picture->setName($file->getClientOriginalName());
+        $picture->setPublicPath('/public/medias/pictures');
+        $picture->setStatus('on')
+        ->setCreatedAt(new DateTime())
+        ->setUpdatedAt(new DateTime());
+        $entityManager->persist($picture);
+
+        $book->setCoverImage($picture);
+        
         $errors = $validator->validate($book);
         if($errors->count() > 1){
             return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);

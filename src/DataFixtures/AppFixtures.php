@@ -7,6 +7,7 @@ use App\Entity\Book;
 use App\Entity\Genre;
 use App\Entity\ListBook;
 use App\Entity\Persona;
+use App\Entity\Review;
 use App\Entity\User;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -48,61 +49,61 @@ class AppFixtures extends Fixture
         $personas = [];
         for ($i=0; $i < 10; $i++) { 
         $gender = random_int( 0, 1);
-    $genderStr = $gender ? 'male' : "female";
-    $persona = new Persona();
-    $birthdateStart =  new \DateTime("01/01/1980");
-    $birthdateEnd = new \DateTime("01/01/2000");
-    $birthDate = $this->faker->dateTimeBetween($birthdateStart,$birthdateEnd);
-       $created = $this->faker->dateTimeBetween("-1 week", "now");
-        $updated = $this->faker->dateTimeBetween($created, "now");
-    $persona
-    ->setPhone($this->faker->e164PhoneNumber())
-    ->setGender($gender)
-    ->setName($this->faker->lastName($genderStr))
-    ->setSurname($this->faker->firstName($genderStr))
-    ->setEmail($this->faker->email())
-    ->setBirthdate( $birthDate)
-    ->setAnonymous(false)
-    ->setStatus("on")
-    ->setCreatedAt($created)
-    ->setUpdatedAt($updated);
+        $genderStr = $gender ? 'male' : "female";
+        $persona = new Persona();
+        $birthdateStart =  new \DateTime("01/01/1980");
+        $birthdateEnd = new \DateTime("01/01/2000");
+        $birthDate = $this->faker->dateTimeBetween($birthdateStart,$birthdateEnd);
+        $created = $this->faker->dateTimeBetween("-1 week", "now");
+            $updated = $this->faker->dateTimeBetween($created, "now");
+        $persona
+        ->setPhone($this->faker->e164PhoneNumber())
+        ->setGender($gender)
+        ->setName($this->faker->lastName($genderStr))
+        ->setSurname($this->faker->firstName($genderStr))
+        ->setEmail($this->faker->email())
+        ->setBirthdate( $birthDate)
+        ->setAnonymous(false)
+        ->setStatus("on")
+        ->setCreatedAt($created)
+        ->setUpdatedAt($updated);
 
-    $manager->persist($persona);
-    $personas[] = $persona;
-    }
+        $manager->persist($persona);
+        $personas[] = $persona;
+        }
 
-    $users = [];
+        $users = [];
 
-    //Set Public User
-    $publicUser = new User();
-    $publicUser->setUsername("public");
-    $publicUser->setRoles(["PUBLIC"]);
-    $publicUser->setPassword($this->userPasswordHasher->hashPassword($publicUser, "public"));
-    $publicUser->setPersona($personas[array_rand($personas, 1)]);
-    $manager->persist($publicUser);
-    $users[] = $publicUser;
+        //Set Public User
+        $publicUser = new User();
+        $publicUser->setUsername("public");
+        $publicUser->setRoles(["PUBLIC"]);
+        $publicUser->setPassword($this->userPasswordHasher->hashPassword($publicUser, "public"));
+        $publicUser->setPersona($personas[array_rand($personas, 1)]);
+        $manager->persist($publicUser);
+        $users[] = $publicUser;
 
 
-    for ($i = 0; $i < 5; $i++) {
-        $userUser = new User();
-        $password = $this->faker->password(2, 6);
-        $userUser->setUsername($this->faker->userName() . "@". $password);
-        $userUser->setRoles(["USER"]);
-        $userUser->setPassword($this->userPasswordHasher->hashPassword($userUser, $password));
-        $userUser->setPersona($personas[array_rand($personas, 1)]);
-        
-        $manager->persist($userUser);
-        $users[] = $userUser;
-    }
+        for ($i = 0; $i < 5; $i++) {
+            $userUser = new User();
+            $password = $this->faker->password(2, 6);
+            $userUser->setUsername($this->faker->userName() . "@". $password);
+            $userUser->setRoles(["USER"]);
+            $userUser->setPassword($this->userPasswordHasher->hashPassword($userUser, $password));
+            $userUser->setPersona($personas[array_rand($personas, 1)]);
+            
+            $manager->persist($userUser);
+            $users[] = $userUser;
+        }
     
         // Admins
-    $adminUser = new User();
-    $adminUser->setUsername("admin");
-    $adminUser->setRoles(["ADMIN"]);
-    $adminUser->setPassword($this->userPasswordHasher->hashPassword($adminUser, "password"));
-    $adminUser->setPersona($personas[array_rand($personas, 1)]);
-    $manager->persist($adminUser);
-    $users[] = $adminUser;
+        $adminUser = new User();
+        $adminUser->setUsername("admin");
+        $adminUser->setRoles(["ADMIN"]);
+        $adminUser->setPassword($this->userPasswordHasher->hashPassword($adminUser, "password"));
+        $adminUser->setPersona($personas[array_rand($personas, 1)]);
+        $manager->persist($adminUser);
+        $users[] = $adminUser;
 
 
        
@@ -125,11 +126,12 @@ class AppFixtures extends Fixture
             }
 
             $book = new Book();
-            $book->setName($this->faker->sentence(3))
+            $book->setTitle($this->faker->sentence(3))
             ->setTotalPages($this->faker->randomNumber(3, true))
             ->setPublisher($this->faker->word())
-            ->setSynopsis($this->faker->text())
+            ->setDescription($this->faker->text())
             ->setGenre($genre)
+            ->setISBN($this->faker->isbn13())
             ->setVolume(1)
             ->setCreatedAt($db)
             ->setUpdatedAt($da)
@@ -168,10 +170,17 @@ class AppFixtures extends Fixture
                 $listBook->setStatus("on");
             }
 
+            $review = new Review();
+            $review->setTitle($this->faker->word())
+            ->setBook($book)
+            ->setUser();
+
+
             $manager->persist($genre);
             $manager->persist($author);
             $manager->persist($book);
             $manager->persist($listBook);
+            $manager->persist($review);
 
         }
 
