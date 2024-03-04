@@ -49,6 +49,9 @@ class Persona
     #[ORM\OneToMany(mappedBy: 'persona', targetEntity: User::class)]
     private Collection $user;
 
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?Picture $profilePicture = null;
+
 
     public function __construct()
     {
@@ -206,6 +209,18 @@ class Persona
                 $user->setPersona(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getProfilePicture(): ?Picture
+    {
+        return $this->profilePicture;
+    }
+
+    public function setProfilePicture(?Picture $profilePicture): static
+    {
+        $this->profilePicture = $profilePicture;
 
         return $this;
     }
