@@ -19,7 +19,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
-   /**
+    /**
      * Hasher de mot de passe
      *
      * @var UserPasswordHasherInterface
@@ -31,7 +31,8 @@ class AppFixtures extends Fixture
      */
     private Generator $faker;
 
-    public function __construct(UserPasswordHasherInterface $userPasswordHasher){
+    public function __construct(UserPasswordHasherInterface $userPasswordHasher)
+    {
         $paramName = "userPasswordHasher";
         $this->faker = Factory::create('fr_FR');
         $this->$paramName = $userPasswordHasher;
@@ -47,29 +48,29 @@ class AppFixtures extends Fixture
     {
 
         $personas = [];
-        for ($i=0; $i < 10; $i++) { 
-        $gender = random_int( 0, 1);
-        $genderStr = $gender ? 'male' : "female";
-        $persona = new Persona();
-        $birthdateStart =  new \DateTime("01/01/1980");
-        $birthdateEnd = new \DateTime("01/01/2000");
-        $birthDate = $this->faker->dateTimeBetween($birthdateStart,$birthdateEnd);
-        $created = $this->faker->dateTimeBetween("-1 week", "now");
+        for ($i = 0; $i < 10; $i++) {
+            $gender = random_int(0, 1);
+            $genderStr = $gender ? 'male' : "female";
+            $persona = new Persona();
+            $birthdateStart =  new \DateTime("01/01/1980");
+            $birthdateEnd = new \DateTime("01/01/2000");
+            $birthDate = $this->faker->dateTimeBetween($birthdateStart, $birthdateEnd);
+            $created = $this->faker->dateTimeBetween("-1 week", "now");
             $updated = $this->faker->dateTimeBetween($created, "now");
-        $persona
-        ->setPhone($this->faker->e164PhoneNumber())
-        ->setGender($gender)
-        ->setName($this->faker->lastName($genderStr))
-        ->setSurname($this->faker->firstName($genderStr))
-        ->setEmail($this->faker->email())
-        ->setBirthdate( $birthDate)
-        ->setAnonymous(false)
-        ->setStatus("on")
-        ->setCreatedAt($created)
-        ->setUpdatedAt($updated);
+            $persona
+                ->setPhone($this->faker->e164PhoneNumber())
+                ->setGender($gender)
+                ->setName($this->faker->lastName($genderStr))
+                ->setSurname($this->faker->firstName($genderStr))
+                ->setEmail($this->faker->email())
+                ->setBirthdate($birthDate)
+                ->setAnonymous(false)
+                ->setStatus("on")
+                ->setCreatedAt($created)
+                ->setUpdatedAt($updated);
 
-        $manager->persist($persona);
-        $personas[] = $persona;
+            $manager->persist($persona);
+            $personas[] = $persona;
         }
 
         $users = [];
@@ -87,15 +88,15 @@ class AppFixtures extends Fixture
         for ($i = 0; $i < 5; $i++) {
             $userUser = new User();
             $password = $this->faker->password(2, 6);
-            $userUser->setUsername($this->faker->userName() . "@". $password);
+            $userUser->setUsername($this->faker->userName() . "@" . $password);
             $userUser->setRoles(["USER"]);
             $userUser->setPassword($this->userPasswordHasher->hashPassword($userUser, $password));
             $userUser->setPersona($personas[array_rand($personas, 1)]);
-            
+
             $manager->persist($userUser);
             $users[] = $userUser;
         }
-    
+
         // Admins
         $adminUser = new User();
         $adminUser->setUsername("admin");
@@ -106,39 +107,39 @@ class AppFixtures extends Fixture
         $users[] = $adminUser;
 
 
-       
+
         $bookTb  = [];
 
         // $product = new Product();
         // $manager->persist($product);
-        for ($i=0; $i < 100; $i++) { 
+        for ($i = 0; $i < 100; $i++) {
             $db = $this->faker->dateTimeBetween("-1 week", "now");
             $da = $this->faker->dateTimeBetween($db, "now");
-            
+
             $genre = new Genre();
             $genre->setName($this->faker->word())
-            ->setCreatedAt($db)
-            ->setUpdatedAt($da);
-            if($i > 90){
+                ->setCreatedAt($db)
+                ->setUpdatedAt($da);
+            if ($i > 90) {
                 $genre->setStatus("off");
-            }else{
+            } else {
                 $genre->setStatus("on");
             }
 
             $book = new Book();
             $book->setTitle($this->faker->sentence(3))
-            ->setTotalPages($this->faker->randomNumber(3, true))
-            ->setPublisher($this->faker->word())
-            ->setDescription($this->faker->text())
-            ->setGenre($genre)
-            ->setISBN($this->faker->isbn13())
-            ->setVolume(1)
-            ->setCreatedAt($db)
-            ->setUpdatedAt($da)
-            ->setPublishingDate($this->faker->dateTime());
-            if($i > 90){
+                ->setTotalPages($this->faker->randomNumber(3, true))
+                ->setPublisher($this->faker->word())
+                ->setDescription($this->faker->text())
+                ->setGenre($genre)
+                ->setISBN($this->faker->isbn13())
+                ->setVolume(1)
+                ->setCreatedAt($db)
+                ->setUpdatedAt($da)
+                ->setPublishingDate($this->faker->dateTime());
+            if ($i > 90) {
                 $book->setStatus("off");
-            }else{
+            } else {
                 $book->setStatus("on");
             }
 
@@ -146,13 +147,13 @@ class AppFixtures extends Fixture
 
             $author = new Author();
             $author->setName($this->faker->name())
-            ->setBiography($this->faker->text())
-            ->addBook($book)
-            ->setCreatedAt($db)
-            ->setUpdatedAt($da);
-            if($i > 90){
+                ->setBiography($this->faker->text())
+                ->addBook($book)
+                ->setCreatedAt($db)
+                ->setUpdatedAt($da);
+            if ($i > 90) {
                 $author->setStatus("off");
-            }else{
+            } else {
                 $author->setStatus("on");
             }
 
@@ -160,20 +161,29 @@ class AppFixtures extends Fixture
 
             $listBook = new ListBook();
             $listBook->setName($this->faker->word())
-            ->addBook($book)
-            ->setCreatedAt($db)
-            ->setUpdatedAt($da);
+                ->addBook($book)
+                ->setCreatedAt($db)
+                ->setUpdatedAt($da);
 
-            if($i > 90){
+            if ($i > 90) {
                 $listBook->setStatus("off");
-            }else{
+            } else {
                 $listBook->setStatus("on");
             }
 
-            $review = new Review();
+            if($i < 10){
+                $review = new Review();
             $review->setTitle($this->faker->word())
-            ->setBook($book)
-            ->setUser();
+                ->setBook($book)
+                ->setUser($personas[$i])
+                ->setComment($this->faker->text())
+                ->setStatus("on")
+                ->setCreatedAt($db)
+                ->setUpdatedAt($da);
+                
+            }
+
+            
 
 
             $manager->persist($genre);
@@ -181,7 +191,6 @@ class AppFixtures extends Fixture
             $manager->persist($book);
             $manager->persist($listBook);
             $manager->persist($review);
-
         }
 
         // foreach ($bookTb as $key => $book) {
@@ -192,7 +201,7 @@ class AppFixtures extends Fixture
         // }
 
 
-        
+
         $manager->flush();
     }
 }
