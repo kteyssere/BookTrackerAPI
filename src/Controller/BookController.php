@@ -21,7 +21,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
-
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Annotation\Model;
 class BookController extends AbstractController
 {
 
@@ -137,6 +138,14 @@ class BookController extends AbstractController
      * @param SerializerInterface $serializer
      * @return JsonResponse
      */
+    #[OA\Response(
+        response:200,
+        description: "Retourne la liste des livres",
+        content: new OA\JsonContent(
+            type: "array",
+            items: new OA\Items(ref: new Model(type:Book::class))
+        )
+    )]
     #[Route('/api/book', name: 'book.getAll', methods: ['GET'])]
    // #[IsGranted("IS_AUTHENTIFICATED_FULLY")]
     public function getAllBooks(BookRepository $repository, SerializerInterface $serializer, TagAwareCacheInterface $cache): JsonResponse
