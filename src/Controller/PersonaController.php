@@ -6,13 +6,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
-
 use App\Entity\Persona;
 use App\Entity\User;
 use App\Repository\PersonaRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\IsGranted;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,7 +20,10 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
-
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class PersonaController extends AbstractController
 {
@@ -33,10 +34,13 @@ class PersonaController extends AbstractController
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
      * @param UrlGeneratorInterface $urlgenerator
+     * @param ValidatorInterface $validator 
+     * @param TagAwareCacheInterface $cache 
+     * @param UserPasswordHasherInterface $passwordHasher
      * @return JsonResponse
      */
     #[Route('/api/persona', name: 'persona.post', methods: ['POST'])]
-    public function createPersona(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache): JsonResponse
+    public function createPersona(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $persona = $serializer->deserialize($request->getContent(), Persona::class, "json");
         $dateNow = new DateTime();
@@ -52,15 +56,20 @@ class PersonaController extends AbstractController
         }
 
         $entityManager->persist($persona);
-        $rawPassword = $request->getContent();
-        dd($rawPassword);
-        // $user  = new User();
-        // $user->setUsername($persona->getUserName())
-        // ->setRoles(["USER"])
-        // ->setPassword()
-        // ->setPersona($persona);
+        $plaintextPassword = $request->getContent();
+        dd($plaintextPassword);
+        $user  = new User();
+        $hashedPassword = $passwordHasher->hashPassword(
+            $user,
+            $plaintextPassword
+        );
+        
+        $user->setUsername($persona->getUserName())
+        ->setRoles(["ROLE_USER"])
+        ->setPassword($hashedPassword)
+        ->setPersona($persona);
 
-        //$entityManager->persist($user);
+        $entityManager->persist($user);
 
 
         $entityManager->flush();
@@ -72,98 +81,110 @@ class PersonaController extends AbstractController
         return new JsonResponse($jsonPersona, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
-//     /**
-//      * Update book entry
-//      * 
-//      * @param Book $book
-//      * @param Request $request
-//      * @param SerializerInterface $serializer
-//      * @param EntityManagerInterface $manager
-//      * @return JsonResponse
-//      */
-//     #[Route('/api/book/{id}', name: 'book.put', methods: ['PUT'])]
-//     public function updateBook(Book $book, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
-//     {
-//         $updatedBook = $serializer->deserialize($request->getContent(), Book::class, "json", [AbstractNormalizer::OBJECT_TO_POPULATE => $book]);
-//         $updatedBook->setUpdatedAt(new DateTime());
-//         $entityManager->persist($updatedBook);
-//         $entityManager->flush();
+    /**
+     * Update persona entry
+     * 
+     * @param Persona $persona
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @param EntityManagerInterface $manager
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     */
+    #[Route('/api/persona/{id}', name: 'persona.put', methods: ['PUT'])]
+    public function updatePersona(Persona $persona, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
+    {
+        $updatedPersona = $serializer->deserialize($request->getContent(), Persona::class, "json", [AbstractNormalizer::OBJECT_TO_POPULATE => $persona]);
+        $updatedPersona->setUpdatedAt(new DateTime());
+        $entityManager->persist($updatedPersona);
+        $entityManager->flush();
 
-//         $cache->invalidateTags(["bookCache"]);
+        $cache->invalidateTags(["personaCache"]);
 
        
-//         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
-//     }
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
 
-//     /**
-//      * Delete book entry
-//      * 
-//      * @param Book $book
-//      * @param Request $request
-//      * @param SerializerInterface $serializer
-//      * @param EntityManagerInterface $manager
-//      * @return JsonResponse
-//      */
-//     #[Route('/api/book/{id}', name: 'book.delete', methods: ['DELETE'])]
-//     public function deleteBook(Book $book, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
-//     {
-//         $arrResponse = $request->toArray();
+    /**
+     * Delete persona entry
+     * 
+     * @param Persona $persona
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @param EntityManagerInterface $manager
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     */
+    #[Route('/api/persona/{id}', name: 'persona.delete', methods: ['DELETE'])]
+    #[IsGranted("ADMIN")]
 
-//         $force = $arrResponse["force"];
+    public function deletePersona(Persona $persona, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
+    {
+        $arrResponse = $request->toArray();
+
+        $force = $arrResponse["force"];
         
-//         if($force){
-//             $entityManager->remove($book);
-//         }else{
-//             $updatedBook = $serializer->deserialize($request->getContent(), Book::class, "json", [AbstractNormalizer::OBJECT_TO_POPULATE => $book]);
-//             $updatedBook->setStatus("off");
-//             $updatedBook->setUpdatedAt(new DateTime());
-//             $entityManager->persist($updatedBook);
-//         }
+        if($force){
+            $entityManager->remove($persona);
+        }else{
+            $updatedPersona = $serializer->deserialize($request->getContent(), Persona::class, "json", [AbstractNormalizer::OBJECT_TO_POPULATE => $persona]);
+            $updatedPersona->setStatus("off");
+            $updatedPersona->setUpdatedAt(new DateTime());
+            $entityManager->persist($updatedPersona);
+        }
         
-//         $entityManager->flush();
+        $entityManager->flush();
 
-//         $cache->invalidateTags(["bookCache"]);
+        $cache->invalidateTags(["personaCache"]);
 
         
-//         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
-//     }
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
 
-//     /** 
-//      * Renvoie toutes les entées books
-//      * 
-//      * @param BookRepository $repository
-//      * @param SerializerInterface $serializer
-//      * @return JsonResponse
-//      */
-//     #[Route('/api/book', name: 'book.getAll', methods: ['GET'])]
-//    // #[IsGranted("IS_AUTHENTIFICATED_FULLY")]
-//     public function getAllBooks(BookRepository $repository, SerializerInterface $serializer, TagAwareCacheInterface $cache): JsonResponse
-//     {
-//         $idCache = "getAllBook";
-//         $cache->invalidateTags(["bookCache"]);
-//         $jsonBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
-//             //echo "MISE EN CACHE";
-//             $item->tag("bookCache");
-//             $books = $repository->findAll();
-//             return $serializer->serialize($books, 'json',  ['groups' => "getAll"]);
-//         });
+    /** 
+     * Renvoie toutes les entées personas
+     * 
+     * @param PersonaRepository $repository
+     * @param SerializerInterface $serializer
+     * @param TagAwareCacheInterface $cache
+     * @return JsonResponse
+     */
+    #[OA\Response(
+        response:200,
+        description: "Retourne la liste des profils",
+        content: new OA\JsonContent(
+            type: "array",
+            items: new OA\Items(ref: new Model(type:Persona::class))
+        )
+    )]
+    #[Route('/api/persona', name: 'persona.getAll', methods: ['GET'])]
+    #[IsGranted("ADMIN")]
+    public function getAllPersonas(PersonaRepository $repository, SerializerInterface $serializer, TagAwareCacheInterface $cache): JsonResponse
+    {
+        $idCache = "getAllPersona";
+        $cache->invalidateTags(["personaCache"]);
+        $jsonPersonas = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
+            $item->tag("personaCache");
+            $personas = $repository->findAll();
+            return $serializer->serialize($personas, 'json',  ['groups' => "getAll"]);
+        });
         
-//         return new JsonResponse($jsonBooks, 200, [], true);
-//     }
+        return new JsonResponse($jsonPersonas, 200, [], true);
+    }
 
-//     /** 
-//      * Renvoie l'entée book
-//      * 
-//      * @param Book $book
-//      * @param SerializerInterface $serializer
-//      * @return JsonResponse
-//      */
-//     #[Route('/api/book/{idBook}', name: 'book.get', methods: ['GET'])]
-//     #[ParamConverter("book", options: ["id" => "idBook"])]
-//     public function getBook(Book $book, SerializerInterface $serializer): JsonResponse
-//     {
-//         $jsonBook = $serializer->serialize($book, 'json', ['groups' => "getAll"]);
+    /** 
+     * Renvoie l'entée persona
+     * 
+     * @param Persona $persona
+     * @param SerializerInterface $serializer
+     * @return JsonResponse
+     */
+    #[Route('/api/persona/{idPersona}', name: 'persona.get', methods: ['GET'])]
+    #[ParamConverter("persona", options: ["id" => "idPersona"])]
+    public function getPersona(Persona $persona, SerializerInterface $serializer): JsonResponse
+    {
+        $jsonPersona = $serializer->serialize($persona, 'json', ['groups' => "getAll"]);
 
-//         return new JsonResponse($jsonBook, 200, [], true);
-//     }
+        return new JsonResponse($jsonPersona, 200, [], true);
+    }
 }

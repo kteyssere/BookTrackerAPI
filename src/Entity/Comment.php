@@ -2,40 +2,28 @@
 
 namespace App\Entity;
 
-use App\Repository\ReviewRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use App\Repository\CommentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity(repositoryClass: ReviewRepository::class)]
-class Review
+
+#[ORM\Entity(repositoryClass: CommentRepository::class)]
+class Comment
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\ManyToOne(inversedBy: 'comments')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Post $post = null;
+
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(["getAll"])]
 
-    private ?string $Comment = null;
-
-    #[ORM\ManyToOne]
-    #[Groups(["getAll"])]
-
-    private ?Persona $User = null;
-
-    #[ORM\ManyToOne(inversedBy: 'reviews')]
-    #[Groups(["getAll"])]
-
-    private ?Book $Book = null;
-
-    #[ORM\Column(length: 255)]
-    #[Groups(["getAll"])]
-
-    private ?string $title = null;
+    private ?string $content = null;
 
     #[ORM\Column(length: 25)]
     private ?string $status = null;
@@ -48,60 +36,31 @@ class Review
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
 
-    public function __construct()
-    {
-        
-    }
-
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getComment(): ?string
+    public function getPost(): ?Post
     {
-        return $this->Comment;
+        return $this->post;
     }
 
-    public function setComment(string $Comment): static
+    public function setPost(?Post $post): static
     {
-        $this->Comment = $Comment;
+        $this->post = $post;
 
         return $this;
     }
 
-    public function getUser(): ?Persona
+    public function getContent(): ?string
     {
-        return $this->User;
+        return $this->content;
     }
 
-    public function setUser(?Persona $User): static
+    public function setContent(string $content): static
     {
-        $this->User = $User;
-
-        return $this;
-    }
-
-    public function getBook(): ?Book
-    {
-        return $this->Book;
-    }
-
-    public function setBook(?Book $Book): static
-    {
-        $this->Book = $Book;
-
-        return $this;
-    }
-
-    public function getTitle(): ?string
-    {
-        return $this->title;
-    }
-
-    public function setTitle(string $title): static
-    {
-        $this->title = $title;
+        $this->content = $content;
 
         return $this;
     }
@@ -142,6 +101,4 @@ class Review
 
         return $this;
     }
-
-
 }

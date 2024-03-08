@@ -16,6 +16,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Attributes as OA;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+
 
 class ListBookController extends AbstractController
 {
@@ -26,10 +32,12 @@ class ListBookController extends AbstractController
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
      * @param UrlGeneratorInterface $urlgenerator
+     * @param ValidatorInterface $validator
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[Route('/api/list-book', name: 'listBook.post', methods: ['POST'])]
-    public function createListBook(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator): JsonResponse
+    public function createListBook(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache): JsonResponse
     {
         $listBook = $serializer->deserialize($request->getContent(), ListBook::class, "json");
         $dateNow = new DateTime();
@@ -37,8 +45,16 @@ class ListBookController extends AbstractController
         $listBook->setStatus('on')
         ->setCreatedAt($dateNow)
         ->setUpdatedAt($dateNow);
+
+        $errors = $validator->validate($listBook);
+        if($errors->count() > 1){
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        }
+
         $entityManager->persist($listBook);
         $entityManager->flush();
+
+        $cache->invalidateTags(["listBookCache"]);
         
         $jsonListBook = $serializer->serialize($listBook, 'json',  ['groups' => "getAll"]);
         $location = $urlgenerator->generate("listBook.get",  ["idListBook" => $listBook->getId()], UrlGeneratorInterface::ABSOLUTE_PATH);
@@ -53,15 +69,19 @@ class ListBookController extends AbstractController
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[Route('/api/list-book/{id}', name: 'listBook.put', methods: ['PUT'])]
-    public function updateListBook(ListBook $listBook, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
+    public function updateListBook(ListBook $listBook, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $updatedListBook = $serializer->deserialize($request->getContent(), ListBook::class, "json", [AbstractNormalizer::OBJECT_TO_POPULATE => $listBook]);
         $updatedListBook->setUpdatedAt(new DateTime());
         $entityManager->persist($updatedListBook);
         $entityManager->flush();
+
+        $cache->invalidateTags(["listBookCache"]);
+
        
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
@@ -73,10 +93,11 @@ class ListBookController extends AbstractController
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[Route('/api/list-book/{id}', name: 'listBook.delete', methods: ['DELETE'])]
-    public function deleteListBook(ListBook $listBook, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
+    public function deleteListBook(ListBook $listBook, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $arrResponse = $request->toArray();
 
@@ -92,6 +113,8 @@ class ListBookController extends AbstractController
         }
         
         $entityManager->flush();
+
+        $cache->invalidateTags(["listBookCache"]);
         
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
@@ -101,14 +124,28 @@ class ListBookController extends AbstractController
      * 
      * @param ListBookRepository $repository
      * @param SerializerInterface $serializer
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
+    #[OA\Response(
+        response:200,
+        description: "Retourne la liste des etageres",
+        content: new OA\JsonContent(
+            type: "array",
+            items: new OA\Items(ref: new Model(type:ListBook::class))
+        )
+    )]
     #[Route('/api/list-book', name: 'listBook.getAll', methods: ['GET'])]
-    public function getAllListBooks(ListBookRepository $repository, SerializerInterface $serializer): JsonResponse
+    public function getAllListBooks(ListBookRepository $repository, SerializerInterface $serializer, TagAwareCacheInterface $cache): JsonResponse
     {
-        $listBooks = $repository->findAll();
-        $jsonListBooks = $serializer->serialize($listBooks, 'json',  ['groups' => "getAll"]);
-        
+        $idCache = "getAllListBook";
+        $cache->invalidateTags(["listBookCache"]);
+        $jsonListBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
+            $item->tag("listBookCache");
+            $listBooks = $repository->findAll();
+            return $serializer->serialize($listBooks, 'json',  ['groups' => "getAll"]);
+        });
+
         return new JsonResponse($jsonListBooks, 200, [], true);
     }
 

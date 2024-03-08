@@ -5,10 +5,8 @@ namespace App\Controller;
 use App\Entity\Book;
 use App\Repository\BookRepository;
 use App\Entity\Picture;
-use App\Repository\PictureRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\IsGranted;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,6 +21,8 @@ use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use OpenApi\Attributes as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+
 class BookController extends AbstractController
 {
 
@@ -33,9 +33,13 @@ class BookController extends AbstractController
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
      * @param UrlGeneratorInterface $urlgenerator
+     * @param ValidatorInterface $validator
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[Route('/api/book', name: 'book.post', methods: ['POST'])]
+    #[IsGranted("ADMIN")]
+
     public function createBook(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache): JsonResponse
     {
         $book = $serializer->deserialize($request->getContent(), Book::class, "json");
@@ -82,9 +86,12 @@ class BookController extends AbstractController
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[Route('/api/book/{id}', name: 'book.put', methods: ['PUT'])]
+    #[IsGranted("ADMIN")]
+
     public function updateBook(Book $book, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $updatedBook = $serializer->deserialize($request->getContent(), Book::class, "json", [AbstractNormalizer::OBJECT_TO_POPULATE => $book]);
@@ -105,9 +112,12 @@ class BookController extends AbstractController
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[Route('/api/book/{id}', name: 'book.delete', methods: ['DELETE'])]
+    #[IsGranted("ADMIN")]
+
     public function deleteBook(Book $book, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
         $arrResponse = $request->toArray();
@@ -136,6 +146,7 @@ class BookController extends AbstractController
      * 
      * @param BookRepository $repository
      * @param SerializerInterface $serializer
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[OA\Response(
@@ -147,13 +158,11 @@ class BookController extends AbstractController
         )
     )]
     #[Route('/api/book', name: 'book.getAll', methods: ['GET'])]
-   // #[IsGranted("IS_AUTHENTIFICATED_FULLY")]
     public function getAllBooks(BookRepository $repository, SerializerInterface $serializer, TagAwareCacheInterface $cache): JsonResponse
     {
         $idCache = "getAllBook";
         $cache->invalidateTags(["bookCache"]);
         $jsonBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
-            //echo "MISE EN CACHE";
             $item->tag("bookCache");
             $books = $repository->findAll();
             return $serializer->serialize($books, 'json',  ['groups' => "getAll"]);

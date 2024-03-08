@@ -19,6 +19,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Annotation\Model;
 
 class ReviewController extends AbstractController
 {
@@ -30,6 +32,8 @@ class ReviewController extends AbstractController
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
      * @param UrlGeneratorInterface $urlgenerator
+     * @param ValidatorInterface $validator 
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[Route('/api/review', name: 'review.post', methods: ['POST'])]
@@ -65,6 +69,7 @@ class ReviewController extends AbstractController
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[Route('/api/review/{id}', name: 'review.put', methods: ['PUT'])]
@@ -88,6 +93,7 @@ class ReviewController extends AbstractController
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param EntityManagerInterface $manager
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
     #[Route('/api/review/{id}', name: 'review.delete', methods: ['DELETE'])]
@@ -119,16 +125,23 @@ class ReviewController extends AbstractController
      * 
      * @param ReviewRepository $repository
      * @param SerializerInterface $serializer
+     * @param TagAwareCacheInterface $cache
      * @return JsonResponse
      */
+    #[OA\Response(
+        response:200,
+        description: "Retourne la liste des avis",
+        content: new OA\JsonContent(
+            type: "array",
+            items: new OA\Items(ref: new Model(type:Review::class))
+        )
+    )]
     #[Route('/api/review', name: 'review.getAll', methods: ['GET'])]
-   // #[IsGranted("IS_AUTHENTIFICATED_FULLY")]
     public function getAllReviews(ReviewRepository $repository, SerializerInterface $serializer, TagAwareCacheInterface $cache): JsonResponse
     {
         $idCache = "getAllReview";
         $cache->invalidateTags(["reviewCache"]);
         $jsonReviews = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
-            //echo "MISE EN CACHE";
             $item->tag("reviewCache");
             $reviews = $repository->findAll();
             return $serializer->serialize($reviews, 'json',  ['groups' => "getAll"]);

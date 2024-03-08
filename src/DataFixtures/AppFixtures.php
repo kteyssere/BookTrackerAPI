@@ -193,12 +193,9 @@ class AppFixtures extends Fixture
             $manager->persist($review);
         }
 
-        // foreach ($bookTb as $key => $book) {
-        //     $lists = $bookTb(array_rand($bookTb, 1));
-        //     if($book->getId() !== $lists->getId()){
+        
 
-        //     }
-        // }
+        //TODO : Comment, Conversation, Like, Message, Post, 
 
 
 
