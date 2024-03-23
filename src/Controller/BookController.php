@@ -48,21 +48,6 @@ class BookController extends AbstractController
         $book->setStatus('on')
         ->setCreatedAt($dateNow)
         ->setUpdatedAt($dateNow);
-
-        $picture = new Picture();
-        $file = $request->files->get('file');
-        
-        $picture->setFile($file);
-        $picture->setMimeType($file->getClientMimeType());
-        $picture->setRealName($file->getClientOriginalName());
-        $picture->setName($file->getClientOriginalName());
-        $picture->setPublicPath('/public/medias/pictures');
-        $picture->setStatus('on')
-        ->setCreatedAt(new DateTime())
-        ->setUpdatedAt(new DateTime());
-        $entityManager->persist($picture);
-
-        $book->setCoverImage($picture);
         
         $errors = $validator->validate($book);
         if($errors->count() > 0){
