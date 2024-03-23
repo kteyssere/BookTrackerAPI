@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+
 //Serializer group
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -48,7 +49,7 @@ class Book
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getAll"])]
+    #[Groups(["getAll", "getAllListBooks", "getAllFiltered"])]
     #[Assert\NotBlank(message:"Un Livre doit avoir un titre")]
     #[Assert\NotNull(message:"Un Livre doit avoir un titre")]
     #[Assert\Length(min:5, minMessage: "Le titre d'un Livre doit forcement faire plus de {{limit}} characteres")]
@@ -56,6 +57,8 @@ class Book
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(["getAll"])]
+    #[Assert\NotBlank(message:"Un Livre doit avoir une date de publication")]
+    #[Assert\NotNull(message:"Un Livre doit avoir une date de publication")]
     private ?\DateTimeInterface $publishingDate = null;
 
     #[ORM\Column(length: 25)]
@@ -63,15 +66,21 @@ class Book
     private ?string $status = null;
 
     #[ORM\Column]
-    #[Groups(["getAll"])]
+    #[Groups(["getAll", "getAllFiltered"])]
+    #[Assert\NotBlank(message:"Un Livre doit avoir un nombre total de pages")]
+    #[Assert\NotNull(message:"Un Livre doit avoir un nombre total de pages")]
     private ?int $totalPages = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(["getAll"])]
+    #[Assert\NotBlank(message:"Un Livre doit avoir une maison d edition")]
+    #[Assert\NotNull(message:"Un Livre doit avoir une maison d edition")]
     private ?string $publisher = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(["getAll"])]
+    #[Groups(["getAll", "getAllFiltered"])]
+    #[Assert\NotBlank(message:"Un Livre doit avoir une description")]
+    #[Assert\NotNull(message:"Un Livre doit avoir une description")]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -80,38 +89,39 @@ class Book
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
 
-    #[ORM\Column]
+    #[ORM\OneToMany(mappedBy: 'Book', targetEntity: Review::class)]
     #[Groups(["getAll"])]
-    private ?int $volume = null;
-
-    #[ORM\ManyToOne(inversedBy: 'books')]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Groups(["getAll"])]
-    private ?Genre $genre = null;
+    private Collection $reviews;
 
     #[ORM\ManyToMany(targetEntity: Author::class, mappedBy: 'books')]
     #[Groups(["getAll"])]
     private Collection $authors;
 
-    #[ORM\OneToMany(mappedBy: 'Book', targetEntity: Review::class)]
+    #[ORM\Column(length: 255)]
     #[Groups(["getAll"])]
-    private Collection $reviews;
+
+    private ?string $isbn13 = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(["getAll"])]
-    #[Assert\NotBlank(message:"Un Livre doit avoir un ISBN")]
-    #[Assert\NotNull(message:"Un Livre doit avoir un ISBN")]
-    #[Assert\Length(min:10, minMessage: "L'ISBN d'un Livre doit forcement faire plus de {{limit}} characteres")]
-    private ?string $ISBN = null;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?string $isbn10 = null;
+
+    #[ORM\Column(type: Types::ARRAY)]
     #[Groups(["getAll"])]
-    private ?Picture $coverImage = null;
+
+    private array $imageLinks = [];
+
+    #[ORM\ManyToMany(targetEntity: Category::class, mappedBy: 'books')]
+    #[Groups(["getAll"])]
+
+    private Collection $categories;
 
     public function __construct()
     {
         $this->authors = new ArrayCollection();
         $this->reviews = new ArrayCollection();
+        $this->categories = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -215,30 +225,6 @@ class Book
         return $this;
     }
 
-    public function getVolume(): ?int
-    {
-        return $this->volume;
-    }
-
-    public function setVolume(int $volume): static
-    {
-        $this->volume = $volume;
-
-        return $this;
-    }
-
-    public function getGenre(): ?Genre
-    {
-        return $this->genre;
-    }
-
-    public function setGenre(?Genre $genre): static
-    {
-        $this->genre = $genre;
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, Author>
      */
@@ -257,6 +243,20 @@ class Book
         return $this;
     }
 
+    public function addAuthors(array $authors): static
+    {
+        foreach ($authors as $author) {
+            if($author instanceof Author){
+                if (!$this->authors->contains($author)) {
+                    $this->authors->add($author);
+                    $author->addBook($this);
+                }
+            }
+        }
+
+        return $this;
+    }
+
     public function removeAuthor(Author $author): static
     {
         if ($this->authors->removeElement($author)) {
@@ -265,6 +265,9 @@ class Book
 
         return $this;
     }
+
+
+
 
     /**
      * @return Collection<int, Review>
@@ -296,26 +299,80 @@ class Book
         return $this;
     }
 
-    public function getISBN(): ?string
+
+
+    public function getIsbn13(): ?string
     {
-        return $this->ISBN;
+        return $this->isbn13;
     }
 
-    public function setISBN(string $ISBN): static
+    public function setIsbn13(string $isbn13): static
     {
-        $this->ISBN = $ISBN;
+        $this->isbn13 = $isbn13;
 
         return $this;
     }
 
-    public function getCoverImage(): ?Picture
+    public function getIsbn10(): ?string
     {
-        return $this->coverImage;
+        return $this->isbn10;
     }
 
-    public function setCoverImage(?Picture $coverImage): static
+    public function setIsbn10(string $isbn10): static
     {
-        $this->coverImage = $coverImage;
+        $this->isbn10 = $isbn10;
+
+        return $this;
+    }
+
+    public function getImageLinks(): array
+    {
+        return $this->imageLinks;
+    }
+
+    public function setImageLinks(array $imageLinks): static
+    {
+        $this->imageLinks = $imageLinks;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Category>
+     */
+    public function getCategories(): Collection
+    {
+        return $this->categories;
+    }
+
+    public function addCategory(Category $category): static
+    {
+        if (!$this->categories->contains($category)) {
+            $this->categories->add($category);
+            $category->addBook($this);
+        }
+
+        return $this;
+    }
+
+    public function addCategories(array $categories): static
+    {
+        foreach ($categories as $category) {
+            if($category instanceof Category){
+                if (!$this->categories->contains($category)) {
+                    $this->categories->add($category);
+                    $category->addBook($this);
+                }
+            }
+        }
+        return $this;
+    }
+
+    public function removeCategory(Category $category): static
+    {
+        if ($this->categories->removeElement($category)) {
+            $category->removeBook($this);
+        }
 
         return $this;
     }

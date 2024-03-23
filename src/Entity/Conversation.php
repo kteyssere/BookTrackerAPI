@@ -44,7 +44,7 @@ class Conversation
     #[ORM\Column]
     #[Groups(["getAll"])]
 
-    private ?bool $isPrivate = null;
+    private ?bool $isPrivate = true;
 
     public function __construct()
     {

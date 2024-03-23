@@ -21,6 +21,21 @@ class ListBookRepository extends ServiceEntityRepository
         parent::__construct($registry, ListBook::class);
     }
 
+     /**
+    * @return ListBook[] Returns an array of ListBook objects
+    */
+   public function findByPersona($currentUsr): array
+   {
+       return $this->createQueryBuilder('l')
+            ->join('l.persona','p')
+            ->join('p.user', 'u')
+           ->andWhere('u.username = :currentUsr')
+           ->setParameter('currentUsr', $currentUsr)
+           ->getQuery()
+           ->getResult()
+       ;
+   }
+
 //    /**
 //     * @return ListBook[] Returns an array of ListBook objects
 //     */

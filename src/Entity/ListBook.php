@@ -19,11 +19,11 @@ class ListBook
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getAll"])]
+    #[Groups(["getAllListBooks"])]
     private ?string $name = null;
 
     #[ORM\ManyToMany(targetEntity: Book::class)]
-    #[Groups(["getAll"])]
+    #[Groups(["getAllListBooks"])]
     private Collection $book;
 
     #[ORM\Column(length: 25)]
@@ -34,6 +34,10 @@ class ListBook
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
+
+    #[ORM\ManyToOne(inversedBy: 'listBook')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Persona $persona = null;
 
     public function __construct()
     {
@@ -113,6 +117,18 @@ class ListBook
     public function setUpdatedAt(\DateTimeInterface $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getPersona(): ?Persona
+    {
+        return $this->persona;
+    }
+
+    public function setPersona(?Persona $persona): static
+    {
+        $this->persona = $persona;
 
         return $this;
     }

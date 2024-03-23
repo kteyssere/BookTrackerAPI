@@ -22,10 +22,6 @@ class Author
     #[Groups(["getAll"])]
     private ?string $name = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(["getAll"])]
-    private ?string $biography = null;
-
     #[ORM\ManyToMany(targetEntity: Book::class, inversedBy: 'authors')]
     #[Groups(["getAllByAuthor"])]
     private Collection $books;
@@ -57,18 +53,6 @@ class Author
     public function setName(string $name): static
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    public function getBiography(): ?string
-    {
-        return $this->biography;
-    }
-
-    public function setBiography(?string $biography): static
-    {
-        $this->biography = $biography;
 
         return $this;
     }

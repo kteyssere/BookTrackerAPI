@@ -48,7 +48,7 @@ class ReviewController extends AbstractController
 
 
         $errors = $validator->validate($review);
-        if($errors->count() > 1){
+        if($errors->count() > 0){
             return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
         }
 

@@ -21,6 +21,59 @@ class BookRepository extends ServiceEntityRepository
         parent::__construct($registry, Book::class);
     }
 
+
+    /**
+    * @return Book[] Returns an array of Book objects
+    */
+   public function findByQuery($value): array
+   {
+        return $this->createQueryBuilder('b')
+            ->join('b.authors','a')
+            ->join('b.categories','c')
+            ->orWhere('b.title = :val')
+            ->orWhere('b.isbn13 = :val')
+            ->orWhere('b.isbn10 = :val')
+            ->orWhere('a.name = :val')
+            ->orWhere('c.name = :val')
+            ->setParameter('val', $value)
+            ->orderBy('b.title', 'ASC')
+            ->getQuery()
+            ->getResult()
+            ;
+   }
+
+
+    /**
+    * @return Book[] Returns an array of Book objects
+    */
+    public function findByCategory($value): array
+    {
+        return $this->createQueryBuilder('b')
+            ->join('b.categories','c')
+            ->where('c.name = :val')
+            ->setParameter('val', $value)
+            ->orderBy('b.title', 'ASC')
+            ->getQuery()
+            ->getResult()
+            ;
+    }
+
+    /**
+    * @return Book[] Returns an array of Book objects
+    */
+    public function findByAuthor($value): array
+    {
+        return $this->createQueryBuilder('b')
+        ->join('b.authors','a')
+        ->where('a.name = :val')
+        ->setParameter('val', $value)
+        ->orderBy('b.title', 'ASC')
+        ->getQuery()
+        ->getResult()
+        ;
+       
+    }
+
     /**
     * @return Book[] Returns an array of Book objects
     */

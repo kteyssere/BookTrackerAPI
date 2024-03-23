@@ -39,38 +39,44 @@ class PersonaController extends AbstractController
      * @param UserPasswordHasherInterface $passwordHasher
      * @return JsonResponse
      */
-    #[Route('/api/persona', name: 'persona.post', methods: ['POST'])]
+    #[Route('/api/register', name: 'persona.post', methods: ['POST'])]
     public function createPersona(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $persona = $serializer->deserialize($request->getContent(), Persona::class, "json");
+        $user = $serializer->deserialize($request->getContent(), User::class, "json");
         $dateNow = new DateTime();
-        
+      
         $persona->setStatus('on')
         ->setAnonymous(false)
         ->setCreatedAt($dateNow)
         ->setUpdatedAt($dateNow);
 
         $errors = $validator->validate($persona);
-        if($errors->count() > 1){
+        if($errors->count() > 0){
             return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
         }
-
+        
         $entityManager->persist($persona);
-        $plaintextPassword = $request->getContent();
-        dd($plaintextPassword);
-        $user  = new User();
+
+        $arrResponse = $request->toArray();
+        $plaintextPassword = $arrResponse["password"];
+        
         $hashedPassword = $passwordHasher->hashPassword(
             $user,
             $plaintextPassword
         );
         
-        $user->setUsername($persona->getUserName())
-        ->setRoles(["ROLE_USER"])
+        $user->setUsername($arrResponse["username"])
+        ->setRoles(["USER"])
         ->setPassword($hashedPassword)
         ->setPersona($persona);
 
-        $entityManager->persist($user);
+        $errors = $validator->validate($user);
+        if($errors->count() > 0){
+            return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
+        }
 
+        $entityManager->persist($user);
 
         $entityManager->flush();
         

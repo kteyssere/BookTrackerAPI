@@ -4,8 +4,10 @@ namespace App\DataFixtures;
 
 use App\Entity\Author;
 use App\Entity\Book;
-use App\Entity\Genre;
+use App\Entity\Category;
+use App\Entity\Conversation;
 use App\Entity\ListBook;
+use App\Entity\Message;
 use App\Entity\Persona;
 use App\Entity\Review;
 use App\Entity\User;
@@ -14,8 +16,9 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
 use Faker\Generator;
-use Syfmony\Component\PasswordHasher\Hasher\UserPasswordInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Google\Client as GC;
+use Google\Service\Books as GSB;
 
 class AppFixtures extends Fixture
 {
@@ -46,6 +49,124 @@ class AppFixtures extends Fixture
      */
     public function load(ObjectManager $manager): void
     {
+        $client = new GC();
+        $client->setApplicationName("Client_Library_Examples");
+        $client->setDeveloperKey("YOUR_APP_KEY");
+
+        $service = new GSB([$client]);
+        $results = [];
+
+        $query = 'subject:fiction';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 10,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsFiction = $service->volumes->listVolumes($query, $optParams)["items"];
+
+        $query = 'subject:mystery';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 10,
+            'langRestrict'=>'fr'
+        ];
+
+        $resultsMystery = $service->volumes->listVolumes($query, $optParams)["items"];
+
+
+        $query = 'subject:science%20fiction';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 10,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsSf = $service->volumes->listVolumes($query, $optParams)["items"];
+
+        $query = 'subject:fantasy';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 10,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsFantasy = $service->volumes->listVolumes($query, $optParams)["items"];
+
+        $query = 'subject:horror';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 10,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsHorror = $service->volumes->listVolumes($query, $optParams)["items"];
+
+        $query = 'subject:thriller';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 15,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsThriller = $service->volumes->listVolumes($query, $optParams)["items"];
+
+        $query = 'subject:romance';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 15,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsRomance = $service->volumes->listVolumes($query, $optParams)["items"];
+
+        $query = 'subject:history';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 10,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsHistory = $service->volumes->listVolumes($query, $optParams)["items"];
+
+        $query = 'subject:biography';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 10,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsBiography = $service->volumes->listVolumes($query, $optParams)["items"];
+
+
+        $query = 'subject:autobiography';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 10,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsAutobiography = $service->volumes->listVolumes($query, $optParams)["items"];
+
+        $query = 'subject:poetry';
+        $optParams = [
+            'orderBy'=>'newest',
+            'maxResults' => 10,
+            'langRestrict'=>'fr'
+        ];
+        
+        $resultsPoetry = $service->volumes->listVolumes($query, $optParams)["items"];
+
+        $results = array_merge($results, $resultsFiction, $resultsMystery, $resultsSf, 
+        $resultsFantasy, $resultsHorror, $resultsThriller, $resultsRomance, $resultsHistory,
+        $resultsBiography, $resultsAutobiography, $resultsPoetry);
+
+        $unique_array = [];
+        foreach($results as $element) {
+            $hash = $element['volumeInfo']["title"];
+            $unique_array[$hash] = $element;
+        }
+        $results = array_values($unique_array);
 
         $personas = [];
         for ($i = 0; $i < 10; $i++) {
@@ -110,95 +231,137 @@ class AppFixtures extends Fixture
 
         $bookTb  = [];
 
-        // $product = new Product();
-        // $manager->persist($product);
-        for ($i = 0; $i < 100; $i++) {
+        for($i = 0; $i < count($results) && strlen($results[$i]['volumeInfo']["title"]) < 255; $i++) {
             $db = $this->faker->dateTimeBetween("-1 week", "now");
             $da = $this->faker->dateTimeBetween($db, "now");
+           
+            $imgLinks = [];
+            if($results[$i]['volumeInfo']["imageLinks"] !== null){
+                $imgLinks[] = [$results[$i]['volumeInfo']["imageLinks"]["smallThumbnail"], $results[$i]['volumeInfo']["imageLinks"]["thumbnail"]];
+            }
 
-            $genre = new Genre();
-            $genre->setName($this->faker->word())
-                ->setCreatedAt($db)
-                ->setUpdatedAt($da);
-            if ($i > 90) {
-                $genre->setStatus("off");
-            } else {
-                $genre->setStatus("on");
+            $categories = $results[$i]['volumeInfo']["categories"] ?? [];
+            $categoriesOfBook = [];
+            for($j = 0; $j < count($categories); $j++){
+               
+                $allready = $manager->getRepository(Category::class)->findOneBy(["name"=> $categories[$j]]);
+                
+                if($allready === null){
+                    $categ = new Category();
+                    $categ->setName($categories[$j])
+                    ->setCreatedAt($db)
+                    ->setUpdatedAt($da)
+                    ->setStatus("on");
+                    $manager->persist($categ);
+                    $manager->flush();
+
+                    $categoriesOfBook[] = $categ;
+                }else{
+                    $categoriesOfBook[] = $allready;
+                }
+            }
+
+            $authors = $results[$i]['volumeInfo']["authors"] ?? [];
+            $authorsOfBook = [];
+            for($j = 0; $j < count($authors); $j++){
+                $allready = $manager->getRepository(Author::class)->findOneBy(["name"=> $authors[$j]]);
+                if($allready === null){
+                    $authr = new Author();
+                    $authr->setName($authors[$j])
+                    ->setCreatedAt($db)
+                    ->setUpdatedAt($da)
+                    ->setStatus("on");
+                    $manager->persist($authr);
+                    $manager->flush();
+
+                    $authorsOfBook[] = $authr;
+                }else{
+                    $authorsOfBook[] = $allready;
+                }
             }
 
             $book = new Book();
-            $book->setTitle($this->faker->sentence(3))
-                ->setTotalPages($this->faker->randomNumber(3, true))
-                ->setPublisher($this->faker->word())
-                ->setDescription($this->faker->text())
-                ->setGenre($genre)
-                ->setISBN($this->faker->isbn13())
-                ->setVolume(1)
+            $book->setTitle($results[$i]['volumeInfo']["title"] ?? " ")
+                ->setTotalPages($results[$i]['volumeInfo']["pageCount"] ?? 0)
+                ->setPublisher($results[$i]['volumeInfo']["publisher"] ?? " ")
+                ->setDescription($results[$i]['volumeInfo']["description"] ?? " ")
+                ->addCategories($categoriesOfBook)
+                ->setIsbn10($results[$i]['volumeInfo']["industryIdentifiers"][1]["identifier"] ??" ")
+                ->setIsbn13($results[$i]['volumeInfo']["industryIdentifiers"][0]["identifier"] ??" ")
+                ->addAuthors($authorsOfBook)
+                ->setImageLinks($imgLinks)
                 ->setCreatedAt($db)
                 ->setUpdatedAt($da)
-                ->setPublishingDate($this->faker->dateTime());
-            if ($i > 90) {
-                $book->setStatus("off");
-            } else {
-                $book->setStatus("on");
-            }
-
-            $bookTb[] = $book;
-
-            $author = new Author();
-            $author->setName($this->faker->name())
-                ->setBiography($this->faker->text())
-                ->addBook($book)
-                ->setCreatedAt($db)
-                ->setUpdatedAt($da);
-            if ($i > 90) {
-                $author->setStatus("off");
-            } else {
-                $author->setStatus("on");
-            }
-
-            $genre->addBook($book);
-
-            $listBook = new ListBook();
-            $listBook->setName($this->faker->word())
-                ->addBook($book)
-                ->setCreatedAt($db)
-                ->setUpdatedAt($da);
-
-            if ($i > 90) {
-                $listBook->setStatus("off");
-            } else {
-                $listBook->setStatus("on");
-            }
-
-            if($i < 10){
-                $review = new Review();
-            $review->setTitle($this->faker->word())
-                ->setBook($book)
-                ->setUser($personas[$i])
-                ->setComment($this->faker->text())
                 ->setStatus("on")
-                ->setCreatedAt($db)
-                ->setUpdatedAt($da);
-                
-            }
+                ->setPublishingDate(new DateTime($results[$i]['volumeInfo']["publishedDate"]));
 
-            
-
-
-            $manager->persist($genre);
-            $manager->persist($author);
+                $listBook = new ListBook();
+                $listBook->setName($this->faker->word())
+                    ->addBook($book)
+                    ->setPersona($personas[array_rand($personas, 1)])
+                    ->setCreatedAt($db)
+                    ->setUpdatedAt($da);
+    
+    
+                if ($i > 90) {
+                    $listBook->setStatus("off");
+                } else {
+                    $listBook->setStatus("on");
+                }
+    
+                if($i < 10){
+                    $review = new Review();
+                $review->setTitle($this->faker->word())
+                    ->setBook($book)
+                    ->setUser($personas[$i])
+                    ->setComment($this->faker->text())
+                    ->setLikes($i)
+                    ->setStatus("on")
+                    ->setCreatedAt($db)
+                    ->setUpdatedAt($da);
+                    
+                }
+     
             $manager->persist($book);
             $manager->persist($listBook);
             $manager->persist($review);
+
         }
 
-        
+        for ($i = 0; $i < 5; $i++) {
+            $persona1 = $personas[array_rand($personas, 1)];
+            $persona2 = $personas[array_rand($personas, 1)];
+            $conversation = new Conversation();
+            $conversation->addParticipant($persona1)
+            ->addParticipant($persona2)
+            ->setStatus("on")
+            ->setCreatedAt($db)
+            ->setUpdatedAt($da);
+            $manager->persist($conversation);
 
-        //TODO : Comment, Conversation, Like, Message, Post, 
+            for($j = 0; $j < 4; $j++){
+                $message = new Message();
+                $message->setContent($this->faker->text())
+                ->setAuthor($persona1)
+                ->setConversation($conversation)
+                ->setStatus("on")
+                ->setCreatedAt($db)
+                ->setUpdatedAt($da);
+                $manager->persist($message);
 
+            }
 
-
+            for($j = 0; $j < 4; $j++){
+                $message = new Message();
+                $message->setContent($this->faker->text())
+                ->setAuthor($persona2)
+                ->setConversation($conversation)
+                ->setStatus("on")
+                ->setCreatedAt($db)
+                ->setUpdatedAt($da);
+                $manager->persist($message);
+            }
+        }
         $manager->flush();
     }
 }

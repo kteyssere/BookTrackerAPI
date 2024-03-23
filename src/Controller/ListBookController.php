@@ -47,7 +47,7 @@ class ListBookController extends AbstractController
         ->setUpdatedAt($dateNow);
 
         $errors = $validator->validate($listBook);
-        if($errors->count() > 1){
+        if($errors->count() > 0){
             return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
         }
 
@@ -142,8 +142,8 @@ class ListBookController extends AbstractController
         $cache->invalidateTags(["listBookCache"]);
         $jsonListBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
             $item->tag("listBookCache");
-            $listBooks = $repository->findAll();
-            return $serializer->serialize($listBooks, 'json',  ['groups' => "getAll"]);
+            $listBooks = $repository->findByPersona($this->getUser()->getUserIdentifier());
+            return $serializer->serialize($listBooks, 'json',  ['groups' => "getAllListBooks"]);
         });
 
         return new JsonResponse($jsonListBooks, 200, [], true);

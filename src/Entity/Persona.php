@@ -7,6 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: PersonaRepository::class)]
 class Persona
@@ -17,15 +19,21 @@ class Persona
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotNull(message:"Vous devez saisir un nom")]
     private ?string $name = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable:true)]
+    #[Groups(["getAll"])]
+
+
     private ?string $surname = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotNull(message:"Vous devez saisir un email")]
+    #[Assert\Email(message:"L'email {{ value }} n'est pas valide")]
     private ?string $email = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable:true)]
     private ?string $phone = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -40,10 +48,10 @@ class Persona
     #[ORM\Column]
     private ?bool $anonymous = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable:true)]
     private ?\DateTimeInterface $birthdate = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?int $gender = null;
 
     #[ORM\OneToMany(mappedBy: 'persona', targetEntity: User::class)]
@@ -55,11 +63,15 @@ class Persona
     #[ORM\ManyToMany(targetEntity: Conversation::class, mappedBy: 'participants')]
     private Collection $conversations;
 
+    #[ORM\OneToMany(mappedBy: 'persona', targetEntity: ListBook::class)]
+    private Collection $listBook;
+
 
     public function __construct()
     {
         $this->user = new ArrayCollection();
         $this->conversations = new ArrayCollection();
+        $this->listBook = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -251,6 +263,36 @@ class Persona
     {
         if ($this->conversations->removeElement($conversation)) {
             $conversation->removeParticipant($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ListBook>
+     */
+    public function getListBook(): Collection
+    {
+        return $this->listBook;
+    }
+
+    public function addListBook(ListBook $listBook): static
+    {
+        if (!$this->listBook->contains($listBook)) {
+            $this->listBook->add($listBook);
+            $listBook->setPersona($this);
+        }
+
+        return $this;
+    }
+
+    public function removeListBook(ListBook $listBook): static
+    {
+        if ($this->listBook->removeElement($listBook)) {
+            // set the owning side to null (unless already changed)
+            if ($listBook->getPersona() === $this) {
+                $listBook->setPersona(null);
+            }
         }
 
         return $this;

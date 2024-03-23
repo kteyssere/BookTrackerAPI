@@ -65,7 +65,7 @@ class BookController extends AbstractController
         $book->setCoverImage($picture);
         
         $errors = $validator->validate($book);
-        if($errors->count() > 1){
+        if($errors->count() > 0){
             return new JsonResponse($serializer->serialize($errors, 'json'), JsonResponse::HTTP_BAD_REQUEST, [], true);
         }
 
@@ -144,6 +144,7 @@ class BookController extends AbstractController
     /** 
      * Renvoie toutes les entées books
      * 
+     * @param Request $request
      * @param BookRepository $repository
      * @param SerializerInterface $serializer
      * @param TagAwareCacheInterface $cache
@@ -158,15 +159,26 @@ class BookController extends AbstractController
         )
     )]
     #[Route('/api/book', name: 'book.getAll', methods: ['GET'])]
-    public function getAllBooks(BookRepository $repository, SerializerInterface $serializer, TagAwareCacheInterface $cache): JsonResponse
+    public function getAllBooks(Request $request, BookRepository $repository, SerializerInterface $serializer, TagAwareCacheInterface $cache): JsonResponse
     {
-        $idCache = "getAllBook";
-        $cache->invalidateTags(["bookCache"]);
-        $jsonBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
-            $item->tag("bookCache");
-            $books = $repository->findAll();
-            return $serializer->serialize($books, 'json',  ['groups' => "getAll"]);
-        });
+        $query = $request->query->get('query');
+        if($query !== null){
+            $idCache = "getAllBookQuery";
+            $cache->invalidateTags(["bookQueryCache"]);
+            $jsonBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer, $query) {
+                $item->tag("bookQueryCache");
+                $books = $repository->findByQuery($query);
+                return $serializer->serialize($books, 'json',  ['groups' => "getAll"]);
+            });
+        }else{
+            $idCache = "getAllBook";
+            $cache->invalidateTags(["bookCache"]);
+            $jsonBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
+                $item->tag("bookCache");
+                $books = $repository->findAll();
+                return $serializer->serialize($books, 'json',  ['groups' => "getAll"]);
+            });
+        }
         
         return new JsonResponse($jsonBooks, 200, [], true);
     }
@@ -182,6 +194,7 @@ class BookController extends AbstractController
     #[ParamConverter("book", options: ["id" => "idBook"])]
     public function getBook(Book $book, SerializerInterface $serializer): JsonResponse
     {
+       
         $jsonBook = $serializer->serialize($book, 'json', ['groups' => "getAll"]);
 
         return new JsonResponse($jsonBook, 200, [], true);

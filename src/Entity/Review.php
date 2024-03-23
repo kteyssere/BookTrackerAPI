@@ -28,7 +28,8 @@ class Review
     private ?Persona $User = null;
 
     #[ORM\ManyToOne(inversedBy: 'reviews')]
-    #[Groups(["getAll"])]
+    #[Groups(["getAllByReview"])]
+
 
     private ?Book $Book = null;
 
@@ -47,6 +48,9 @@ class Review
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
+
+    #[ORM\Column]
+    private ?int $likes = 0;
 
     public function __construct()
     {
@@ -139,6 +143,32 @@ class Review
     public function setUpdatedAt(\DateTimeInterface $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getLikes(): ?int
+    {
+        return $this->likes;
+    }
+
+    public function setLikes(int $likes): static
+    {
+        $this->likes = $likes;
+
+        return $this;
+    }
+
+    public function addLike(): static
+    {
+        $this->likes++;
+
+        return $this;
+    }
+
+    public function deleteLike(): static
+    {
+        $this->likes--;
 
         return $this;
     }
