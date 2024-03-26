@@ -21,6 +21,20 @@ class CategoryRepository extends ServiceEntityRepository
         parent::__construct($registry, Category::class);
     }
 
+    /**
+    * @return Category[] Returns an array of Category objects
+    */
+    public function findByStatusOn(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.status = :val')
+            ->setParameter('val', "On")
+            ->orderBy('c.id', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
 //    /**
 //     * @return Category[] Returns an array of Category objects
 //     */

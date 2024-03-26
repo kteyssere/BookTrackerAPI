@@ -21,6 +21,20 @@ class MessageRepository extends ServiceEntityRepository
         parent::__construct($registry, Message::class);
     }
 
+     /**
+    * @return Message[] Returns an array of Message objects
+    */
+    public function findByStatusOn(): array
+    {
+        return $this->createQueryBuilder('m')
+            ->andWhere('m.status = :val')
+            ->setParameter('val', "On")
+            ->orderBy('m.id', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
 //    /**
 //     * @return Message[] Returns an array of Message objects
 //     */

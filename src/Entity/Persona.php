@@ -29,8 +29,8 @@ class Persona
     private ?string $surname = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotNull(message:"Vous devez saisir un email")]
-    #[Assert\Email(message:"L'email {{ value }} n'est pas valide")]
+    #[Assert\NotNull(message:"You must enter an email")]
+    #[Assert\Email(message:"Email {{ value }} is invalid")]
     private ?string $email = null;
 
     #[ORM\Column(length: 255, nullable:true)]
@@ -66,12 +66,16 @@ class Persona
     #[ORM\OneToMany(mappedBy: 'persona', targetEntity: ListBook::class)]
     private Collection $listBook;
 
+    #[ORM\OneToMany(mappedBy: 'persona', targetEntity: Progression::class)]
+    private Collection $progressions;
+
 
     public function __construct()
     {
         $this->user = new ArrayCollection();
         $this->conversations = new ArrayCollection();
         $this->listBook = new ArrayCollection();
+        $this->progressions = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -292,6 +296,36 @@ class Persona
             // set the owning side to null (unless already changed)
             if ($listBook->getPersona() === $this) {
                 $listBook->setPersona(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Progression>
+     */
+    public function getProgressions(): Collection
+    {
+        return $this->progressions;
+    }
+
+    public function addProgression(Progression $progression): static
+    {
+        if (!$this->progressions->contains($progression)) {
+            $this->progressions->add($progression);
+            $progression->setPersona($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProgression(Progression $progression): static
+    {
+        if ($this->progressions->removeElement($progression)) {
+            // set the owning side to null (unless already changed)
+            if ($progression->getPersona() === $this) {
+                $progression->setPersona(null);
             }
         }
 

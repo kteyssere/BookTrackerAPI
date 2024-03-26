@@ -148,7 +148,7 @@ class MessageController extends AbstractController
         $cache->invalidateTags(["messageCache"]);
         $jsonMessages = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
             $item->tag("messageCache");
-            $messages = $repository->findAll();
+            $messages = $repository->findByStatusOn();
             return $serializer->serialize($messages, 'json',  ['groups' => "getAll"]);
         });
         

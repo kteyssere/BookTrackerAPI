@@ -30,11 +30,26 @@ class ListBookRepository extends ServiceEntityRepository
             ->join('l.persona','p')
             ->join('p.user', 'u')
            ->andWhere('u.username = :currentUsr')
+           ->andWhere('l.status = on')
            ->setParameter('currentUsr', $currentUsr)
            ->getQuery()
            ->getResult()
        ;
    }
+
+    /**
+    * @return ListBook[] Returns an array of ListBook objects
+    */
+    public function findByStatusOn(): array
+    {
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.status = :val')
+            ->setParameter('val', "On")
+            ->orderBy('l.id', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
 
 //    /**
 //     * @return ListBook[] Returns an array of ListBook objects

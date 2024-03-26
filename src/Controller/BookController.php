@@ -160,7 +160,7 @@ class BookController extends AbstractController
             $cache->invalidateTags(["bookCache"]);
             $jsonBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
                 $item->tag("bookCache");
-                $books = $repository->findAll();
+                $books = $repository->findByStatusOn();
                 return $serializer->serialize($books, 'json',  ['groups' => "getAll"]);
             });
         }

@@ -21,6 +21,37 @@ class ConversationRepository extends ServiceEntityRepository
         parent::__construct($registry, Conversation::class);
     }
 
+    /**
+    * @return Conversation[] Returns an array of Conversation objects
+    */
+   public function findAllOfUser($value): array
+   {
+       return $this->createQueryBuilder('c')
+           ->join('c.participants', 'p')
+           ->join('c.messages', 'm')
+           ->andWhere('p.user = :val')
+           ->andWhere('c.status = on')
+           ->setParameter('val', $value)
+           ->orderBy('m.createdAt', 'ASC')
+           ->getQuery()
+           ->getResult()
+       ;
+   }
+
+    /**
+    * @return Conversation[] Returns an array of Conversation objects
+    */
+    public function findByStatusOn(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.status = :val')
+            ->setParameter('val', "On")
+            ->orderBy('c.id', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
 //    /**
 //     * @return Conversation[] Returns an array of Conversation objects
 //     */

@@ -36,9 +36,9 @@ class Message
     private ?Persona $author = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Assert\NotBlank(message:"Un message doit avoir un contenu")]
-    #[Assert\NotNull(message:"Un message doit avoir un contenu")]
-    #[Assert\Length(min:1, minMessage: "Le message doit forcement faire {{limit}} charactere ou plus")]
+    #[Assert\NotBlank(message:"A message must have content")]
+    #[Assert\NotNull(message:"A message must have content")]
+    #[Assert\Length(min:1, minMessage: "The message must be {{limit}} character or more")]
     private ?string $content = null;
 
     public function getId(): ?int

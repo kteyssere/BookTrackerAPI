@@ -9,6 +9,7 @@ use App\Entity\Conversation;
 use App\Entity\ListBook;
 use App\Entity\Message;
 use App\Entity\Persona;
+use App\Entity\Progression;
 use App\Entity\Review;
 use App\Entity\User;
 use DateTime;
@@ -321,10 +322,25 @@ class AppFixtures extends Fixture
                     ->setUpdatedAt($da);
                     
                 }
-     
+            $bookTb[] = $book;
             $manager->persist($book);
             $manager->persist($listBook);
             $manager->persist($review);
+
+        }
+
+        for ($i = 0; $i < 50; $i++) {
+            $bookForPrg = $bookTb[array_rand($bookTb, 1)];
+            $progression = new Progression();
+            $progression
+            ->setBook($bookForPrg)
+            ->setProgress(rand(1,$bookForPrg->getTotalPages()) ?? 0)
+            ->setPersona($personas[array_rand($personas, 1)])
+            ->setStatus("on")
+            ->setCreatedAt($db)
+            ->setUpdatedAt($da);
+
+            $manager->persist($progression);
 
         }
 

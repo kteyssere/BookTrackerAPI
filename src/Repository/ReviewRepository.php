@@ -21,6 +21,19 @@ class ReviewRepository extends ServiceEntityRepository
         parent::__construct($registry, Review::class);
     }
 
+      /**
+    * @return Review[] Returns an array of Review objects
+    */
+    public function findByStatusOn(): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.status = :val')
+            ->setParameter('val', "On")
+            ->orderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
 //    /**
 //     * @return Review[] Returns an array of Review objects
 //     */

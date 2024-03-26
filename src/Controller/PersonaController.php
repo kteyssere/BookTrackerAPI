@@ -171,7 +171,7 @@ class PersonaController extends AbstractController
         $cache->invalidateTags(["personaCache"]);
         $jsonPersonas = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
             $item->tag("personaCache");
-            $personas = $repository->findAll();
+            $personas = $repository->findByStatusOn();
             return $serializer->serialize($personas, 'json',  ['groups' => "getAll"]);
         });
         

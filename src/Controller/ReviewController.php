@@ -143,7 +143,7 @@ class ReviewController extends AbstractController
         $cache->invalidateTags(["reviewCache"]);
         $jsonReviews = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
             $item->tag("reviewCache");
-            $reviews = $repository->findAll();
+            $reviews = $repository->findByStatusOn();
             return $serializer->serialize($reviews, 'json',  ['groups' => "getAll"]);
         });
         

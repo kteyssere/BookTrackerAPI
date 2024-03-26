@@ -21,6 +21,20 @@ class AuthorRepository extends ServiceEntityRepository
         parent::__construct($registry, Author::class);
     }
 
+    /**
+    * @return Author[] Returns an array of Author objects
+    */
+    public function findByStatusOn(): array
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.status = :val')
+            ->setParameter('val', "On")
+            ->orderBy('a.id', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
 //    /**
 //     * @return Author[] Returns an array of Author objects
 //     */

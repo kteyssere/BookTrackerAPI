@@ -46,19 +46,20 @@ class Book
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getAllListBooks"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(["getAll", "getAllListBooks", "getAllFiltered"])]
-    #[Assert\NotBlank(message:"Un Livre doit avoir un titre")]
-    #[Assert\NotNull(message:"Un Livre doit avoir un titre")]
-    #[Assert\Length(min:5, minMessage: "Le titre d'un Livre doit forcement faire plus de {{limit}} characteres")]
+    #[Assert\NotBlank(message:"A Book must have a title")]
+    #[Assert\NotNull(message:"A Book must have a title")]
+    #[Assert\Length(min:5, minMessage: "The title of a Book must necessarily be more than {{limit}} characters")]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Groups(["getAll"])]
-    #[Assert\NotBlank(message:"Un Livre doit avoir une date de publication")]
-    #[Assert\NotNull(message:"Un Livre doit avoir une date de publication")]
+    #[Assert\NotBlank(message:"A Book must have a publication date")]
+    #[Assert\NotNull(message:"A Book must have a publication date")]
     private ?\DateTimeInterface $publishingDate = null;
 
     #[ORM\Column(length: 25)]
@@ -67,20 +68,14 @@ class Book
 
     #[ORM\Column]
     #[Groups(["getAll", "getAllFiltered"])]
-    #[Assert\NotBlank(message:"Un Livre doit avoir un nombre total de pages")]
-    #[Assert\NotNull(message:"Un Livre doit avoir un nombre total de pages")]
     private ?int $totalPages = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(["getAll"])]
-    #[Assert\NotBlank(message:"Un Livre doit avoir une maison d edition")]
-    #[Assert\NotNull(message:"Un Livre doit avoir une maison d edition")]
     private ?string $publisher = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(["getAll", "getAllFiltered"])]
-    #[Assert\NotBlank(message:"Un Livre doit avoir une description")]
-    #[Assert\NotNull(message:"Un Livre doit avoir une description")]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -108,7 +103,7 @@ class Book
     private ?string $isbn10 = null;
 
     #[ORM\Column(type: Types::ARRAY)]
-    #[Groups(["getAll"])]
+    #[Groups(["getAll", "getAllListBooks"])]
 
     private array $imageLinks = [];
 
@@ -117,11 +112,15 @@ class Book
 
     private Collection $categories;
 
+    #[ORM\OneToMany(mappedBy: 'book', targetEntity: Progression::class)]
+    private Collection $progressions;
+
     public function __construct()
     {
         $this->authors = new ArrayCollection();
         $this->reviews = new ArrayCollection();
         $this->categories = new ArrayCollection();
+        $this->progressions = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -372,6 +371,36 @@ class Book
     {
         if ($this->categories->removeElement($category)) {
             $category->removeBook($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Progression>
+     */
+    public function getProgressions(): Collection
+    {
+        return $this->progressions;
+    }
+
+    public function addProgression(Progression $progression): static
+    {
+        if (!$this->progressions->contains($progression)) {
+            $this->progressions->add($progression);
+            $progression->setBook($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProgression(Progression $progression): static
+    {
+        if ($this->progressions->removeElement($progression)) {
+            // set the owning side to null (unless already changed)
+            if ($progression->getBook() === $this) {
+                $progression->setBook(null);
+            }
         }
 
         return $this;
