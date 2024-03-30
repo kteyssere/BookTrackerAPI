@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Review;
+use App\Repository\BookRepository;
 use App\Repository\ReviewRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,6 +22,8 @@ use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use OpenApi\Attributes as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
+use Symfony\Component\Security\Core\Security;
+use App\Repository\PersonaRepository;
 
 class ReviewController extends AbstractController
 {
@@ -34,15 +37,28 @@ class ReviewController extends AbstractController
      * @param UrlGeneratorInterface $urlgenerator
      * @param ValidatorInterface $validator 
      * @param TagAwareCacheInterface $cache
+     * @param Security $security
+     * @param PersonaRepository $personaRepository
+     * @param BookRepository $bookRepository
      * @return JsonResponse
      */
     #[Route('/api/review', name: 'review.post', methods: ['POST'])]
-    public function createReview(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache): JsonResponse
+    public function createReview(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache, Security $security, PersonaRepository $personaRepository, BookRepository $bookRepository): JsonResponse
     {
+        $arrResponse = $request->toArray();
+
+        $idBook = $arrResponse["idBook"];
         $review = $serializer->deserialize($request->getContent(), Review::class, "json");
+    
         $dateNow = new DateTime();
 
-        $review->setStatus('on')
+        $user = $security->getUser();
+        $persona = $personaRepository->findByUser($user->getUserIdentifier());
+        $book = $bookRepository->find($idBook);
+
+        $review->setUser($persona)
+        ->setBook($book)
+        ->setStatus('on')
         ->setCreatedAt($dateNow)
         ->setUpdatedAt($dateNow);
 

@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\ReviewRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -20,22 +18,15 @@ class Review
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(["getAll"])]
 
-    private ?string $Comment = null;
+    private ?string $comment = null;
 
     #[ORM\ManyToOne]
     #[Groups(["getAll"])]
 
-    private ?Persona $User = null;
-
-    #[ORM\ManyToOne(inversedBy: 'reviews')]
-    #[Groups(["getAllByReview"])]
-
-
-    private ?Book $Book = null;
+    private ?Persona $user = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(["getAll"])]
-
     private ?string $title = null;
 
     #[ORM\Column(length: 25)]
@@ -52,6 +43,11 @@ class Review
     #[ORM\Column]
     private ?int $likes = 0;
 
+    #[ORM\ManyToOne(inversedBy: 'reviews', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["getAllByReview"])]
+    private ?Book $book = null;
+
     public function __construct()
     {
         
@@ -64,36 +60,24 @@ class Review
 
     public function getComment(): ?string
     {
-        return $this->Comment;
+        return $this->comment;
     }
 
-    public function setComment(string $Comment): static
+    public function setComment(string $comment): static
     {
-        $this->Comment = $Comment;
+        $this->comment = $comment;
 
         return $this;
     }
 
     public function getUser(): ?Persona
     {
-        return $this->User;
+        return $this->user;
     }
 
-    public function setUser(?Persona $User): static
+    public function setUser(?Persona $user): static
     {
-        $this->User = $User;
-
-        return $this;
-    }
-
-    public function getBook(): ?Book
-    {
-        return $this->Book;
-    }
-
-    public function setBook(?Book $Book): static
-    {
-        $this->Book = $Book;
+        $this->user = $user;
 
         return $this;
     }
@@ -169,6 +153,18 @@ class Review
     public function deleteLike(): static
     {
         $this->likes--;
+
+        return $this;
+    }
+
+    public function getBook(): ?Book
+    {
+        return $this->book;
+    }
+
+    public function setBook(?Book $book): static
+    {
+        $this->book = $book;
 
         return $this;
     }
