@@ -8,6 +8,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 use App\Entity\ListBook;
 use App\Repository\ListBookRepository;
+use App\Repository\PersonaRepository;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
@@ -21,6 +22,7 @@ use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Security\Core\Security;
 
 
 class ListBookController extends AbstractController
@@ -34,15 +36,22 @@ class ListBookController extends AbstractController
      * @param UrlGeneratorInterface $urlgenerator
      * @param ValidatorInterface $validator
      * @param TagAwareCacheInterface $cache
+     * @param Security $security
+     * @param PersonaRepository $repository
      * @return JsonResponse
      */
     #[Route('/api/list-book', name: 'listBook.post', methods: ['POST'])]
-    public function createListBook(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache): JsonResponse
+    public function createListBook(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache, Security $security, PersonaRepository $repository): JsonResponse
     {
+        
         $listBook = $serializer->deserialize($request->getContent(), ListBook::class, "json");
         $dateNow = new DateTime();
         
-        $listBook->setStatus('on')
+        $user = $security->getUser();
+        $persona = $repository->findByUser($user->getUserIdentifier());
+
+        $listBook->setPersona($persona)
+        ->setStatus('on')
         ->setCreatedAt($dateNow)
         ->setUpdatedAt($dateNow);
 

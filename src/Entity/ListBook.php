@@ -16,6 +16,8 @@ class ListBook
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getAllListBooks"])]
+
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

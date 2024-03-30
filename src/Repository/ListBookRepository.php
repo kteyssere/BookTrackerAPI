@@ -30,8 +30,9 @@ class ListBookRepository extends ServiceEntityRepository
             ->join('l.persona','p')
             ->join('p.user', 'u')
            ->andWhere('u.username = :currentUsr')
-           ->andWhere('l.status = on')
+           ->andWhere('l.status = :status')
            ->setParameter('currentUsr', $currentUsr)
+           ->setParameter('status', "On")
            ->getQuery()
            ->getResult()
        ;
