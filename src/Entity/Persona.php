@@ -54,9 +54,6 @@ class Persona
     #[ORM\Column(nullable: true)]
     private ?int $gender = null;
 
-    #[ORM\OneToMany(mappedBy: 'persona', targetEntity: User::class)]
-    private Collection $user;
-
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     private ?Picture $profilePicture = null;
 
@@ -69,10 +66,13 @@ class Persona
     #[ORM\OneToMany(mappedBy: 'persona', targetEntity: Progression::class)]
     private Collection $progressions;
 
+    #[ORM\OneToOne(inversedBy: 'persona', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?User $user = null;
+
 
     public function __construct()
     {
-        $this->user = new ArrayCollection();
         $this->conversations = new ArrayCollection();
         $this->listBook = new ArrayCollection();
         $this->progressions = new ArrayCollection();
@@ -203,36 +203,6 @@ class Persona
         return $this;
     }
 
-    /**
-     * @return Collection<int, User>
-     */
-    public function getUser(): Collection
-    {
-        return $this->user;
-    }
-
-    public function addUser(User $user): static
-    {
-        if (!$this->user->contains($user)) {
-            $this->user->add($user);
-            $user->setPersona($this);
-        }
-
-        return $this;
-    }
-
-    public function removeUser(User $user): static
-    {
-        if ($this->user->removeElement($user)) {
-            // set the owning side to null (unless already changed)
-            if ($user->getPersona() === $this) {
-                $user->setPersona(null);
-            }
-        }
-
-        return $this;
-    }
-
     public function getProfilePicture(): ?Picture
     {
         return $this->profilePicture;
@@ -328,6 +298,18 @@ class Persona
                 $progression->setPersona(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(User $user): static
+    {
+        $this->user = $user;
 
         return $this;
     }

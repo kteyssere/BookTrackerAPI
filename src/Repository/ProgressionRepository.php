@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Progression;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -21,7 +22,7 @@ class ProgressionRepository extends ServiceEntityRepository
         parent::__construct($registry, Progression::class);
     }
 
-     /**
+    /**
     * @return Progression[] Returns an array of Progression objects
     */
     public function findByStatusOn(): array
@@ -34,6 +35,25 @@ class ProgressionRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
+
+
+    public function findOneByLatest($value): array
+   {
+
+    return $this->createQueryBuilder('p')
+            ->join('p.persona', 'pe')
+            ->join('pe.user', 'u')
+            ->andWhere('u.username = :val')
+            ->andWhere('p.status = :status')
+            ->setParameter('val', $value)
+            ->setParameter('status', 'On')
+            ->orderBy('p.updatedAt', 'DESC')
+            ->getQuery()
+            ->setMaxResults(1)
+            ->getResult()
+        ;
+   
+   }
 
 //    /**
 //     * @return Progression[] Returns an array of Progression objects

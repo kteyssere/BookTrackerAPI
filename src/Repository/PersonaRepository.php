@@ -21,7 +21,7 @@ class PersonaRepository extends ServiceEntityRepository
         parent::__construct($registry, Persona::class);
     }
 
-     /**
+    /**
     * @return Persona[] Returns an array of Persona objects
     */
     public function findByStatusOn(): array
@@ -32,6 +32,23 @@ class PersonaRepository extends ServiceEntityRepository
             ->orderBy('p.id', 'ASC')
             ->getQuery()
             ->getResult()
+        ;
+    }
+
+    /**
+    * @return Persona Returns an Persona object
+    */
+    public function findByUser($usr): ?Persona
+    {
+        return $this->createQueryBuilder('p')
+            ->join('p.user','u')
+            ->where('u.username = :usr')
+            ->andWhere('p.status = :val')
+            ->setParameter('val', "On")
+            ->setParameter('usr', $usr)
+            ->orderBy('p.id', 'ASC')
+            ->getQuery()
+            ->getOneOrNullResult()
         ;
     }
 

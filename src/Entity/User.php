@@ -32,8 +32,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    #[ORM\ManyToOne(inversedBy: 'user')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
     private ?Persona $persona = null;
 
     public function getId(): ?int
@@ -111,8 +110,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->persona;
     }
 
-    public function setPersona(?Persona $persona): static
+    public function setPersona(Persona $persona): static
     {
+        // set the owning side of the relation if necessary
+        if ($persona->getUser() !== $this) {
+            $persona->setUser($this);
+        }
+
         $this->persona = $persona;
 
         return $this;
