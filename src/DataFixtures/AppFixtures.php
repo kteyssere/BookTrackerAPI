@@ -170,6 +170,7 @@ class AppFixtures extends Fixture
         $results = array_values($unique_array);
 
         $personas = [];
+        $users = [];
         for ($i = 0; $i < 10; $i++) {
             $gender = random_int(0, 1);
             $genderStr = $gender ? 'male' : "female";
@@ -179,6 +180,7 @@ class AppFixtures extends Fixture
             $birthDate = $this->faker->dateTimeBetween($birthdateStart, $birthdateEnd);
             $created = $this->faker->dateTimeBetween("-1 week", "now");
             $updated = $this->faker->dateTimeBetween($created, "now");
+            
             $persona
                 ->setPhone($this->faker->e164PhoneNumber())
                 ->setGender($gender)
@@ -191,43 +193,57 @@ class AppFixtures extends Fixture
                 ->setCreatedAt($created)
                 ->setUpdatedAt($updated);
 
-            $manager->persist($persona);
-            $personas[] = $persona;
+                $manager->persist($persona);
+                $personas[] = $persona;
+
+
+
+            if($i < 4){
+                
+
+                //Set Public User
+                $publicUser = new User();
+                $publicUser->setUsername("public".$i);
+                $publicUser->setRoles(["PUBLIC"]);
+                $publicUser->setPassword($this->userPasswordHasher->hashPassword($publicUser, "public"));
+                $publicUser->setPersona($persona);
+                $manager->persist($publicUser);
+                $users[] = $publicUser;
+            }
+
+            if($i < 9 && $i > 3){
+                $userUser = new User();
+                $password = $this->faker->password(2, 6);
+                $userUser->setUsername($this->faker->userName() . "@" . $password);
+                $userUser->setRoles(["USER"]);
+                $userUser->setPassword($this->userPasswordHasher->hashPassword($userUser, $password));
+                $userUser->setPersona($persona);
+
+                $manager->persist($userUser);
+                $users[] = $userUser;
+            }
+
+            if($i < 10 && $i > 8){
+                // Admins
+                $adminUser = new User();
+                $adminUser->setUsername("admin");
+                $adminUser->setRoles(["ADMIN"]);
+                $adminUser->setPassword($this->userPasswordHasher->hashPassword($adminUser, "password"));
+                $adminUser->setPersona($persona);
+                $manager->persist($adminUser);
+                $users[] = $adminUser;
+
+            }
+                
+
+            
+
+
+
+
         }
 
-        $users = [];
-
-        //Set Public User
-        $publicUser = new User();
-        $publicUser->setUsername("public");
-        $publicUser->setRoles(["PUBLIC"]);
-        $publicUser->setPassword($this->userPasswordHasher->hashPassword($publicUser, "public"));
-        $publicUser->setPersona($personas[array_rand($personas, 1)]);
-        $manager->persist($publicUser);
-        $users[] = $publicUser;
-
-
-        for ($i = 0; $i < 5; $i++) {
-            $userUser = new User();
-            $password = $this->faker->password(2, 6);
-            $userUser->setUsername($this->faker->userName() . "@" . $password);
-            $userUser->setRoles(["USER"]);
-            $userUser->setPassword($this->userPasswordHasher->hashPassword($userUser, $password));
-            $userUser->setPersona($personas[array_rand($personas, 1)]);
-
-            $manager->persist($userUser);
-            $users[] = $userUser;
-        }
-
-        // Admins
-        $adminUser = new User();
-        $adminUser->setUsername("admin");
-        $adminUser->setRoles(["ADMIN"]);
-        $adminUser->setPassword($this->userPasswordHasher->hashPassword($adminUser, "password"));
-        $adminUser->setPersona($personas[array_rand($personas, 1)]);
-        $manager->persist($adminUser);
-        $users[] = $adminUser;
-
+        
 
 
         $bookTb  = [];
