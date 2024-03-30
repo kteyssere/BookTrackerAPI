@@ -153,7 +153,7 @@ class BookController extends AbstractController
             $jsonBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer, $query) {
                 $item->tag("bookQueryCache");
                 $books = $repository->findByQuery($query);
-                return $serializer->serialize($books, 'json',  ['groups' => "getAll"]);
+                return $serializer->serialize($books, 'json',  ['groups' => "getAllFiltered"]);
             });
         }else{
             $idCache = "getAllBook";
@@ -161,7 +161,7 @@ class BookController extends AbstractController
             $jsonBooks = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer) {
                 $item->tag("bookCache");
                 $books = $repository->findByStatusOn();
-                return $serializer->serialize($books, 'json',  ['groups' => "getAll"]);
+                return $serializer->serialize($books, 'json',  ['groups' => "getAllFiltered"]);
             });
         }
         

@@ -46,7 +46,7 @@ class Book
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getAllListBooks"])]
+    #[Groups(["getAllListBooks", "getAllFiltered"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -84,10 +84,6 @@ class Book
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'Book', targetEntity: Review::class)]
-    #[Groups(["getAll"])]
-    private Collection $reviews;
-
     #[ORM\ManyToMany(targetEntity: Author::class, mappedBy: 'books')]
     #[Groups(["getAll"])]
     private Collection $authors;
@@ -99,21 +95,22 @@ class Book
 
     #[ORM\Column(length: 255)]
     #[Groups(["getAll"])]
-
     private ?string $isbn10 = null;
 
     #[ORM\Column(type: Types::ARRAY)]
-    #[Groups(["getAll", "getAllListBooks"])]
-
+    #[Groups(["getAll", "getAllListBooks", "getAllFiltered"])]
     private array $imageLinks = [];
 
     #[ORM\ManyToMany(targetEntity: Category::class, mappedBy: 'books')]
     #[Groups(["getAll"])]
-
     private Collection $categories;
 
     #[ORM\OneToMany(mappedBy: 'book', targetEntity: Progression::class)]
     private Collection $progressions;
+
+    #[ORM\OneToMany(mappedBy: 'book', targetEntity: Review::class)]
+    #[Groups(["getAll"])]
+    private Collection $reviews;
 
     public function __construct()
     {
@@ -265,41 +262,6 @@ class Book
         return $this;
     }
 
-
-
-
-    /**
-     * @return Collection<int, Review>
-     */
-    public function getReviews(): Collection
-    {
-        return $this->reviews;
-    }
-
-    public function addReview(Review $review): static
-    {
-        if (!$this->reviews->contains($review)) {
-            $this->reviews->add($review);
-            $review->setBook($this);
-        }
-
-        return $this;
-    }
-
-    public function removeReview(Review $review): static
-    {
-        if ($this->reviews->removeElement($review)) {
-            // set the owning side to null (unless already changed)
-            if ($review->getBook() === $this) {
-                $review->setBook(null);
-            }
-        }
-
-        return $this;
-    }
-
-
-
     public function getIsbn13(): ?string
     {
         return $this->isbn13;
@@ -400,6 +362,36 @@ class Book
             // set the owning side to null (unless already changed)
             if ($progression->getBook() === $this) {
                 $progression->setBook(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Review>
+     */
+    public function getReviews(): Collection
+    {
+        return $this->reviews;
+    }
+
+    public function addReview(Review $review): static
+    {
+        if (!$this->reviews->contains($review)) {
+            $this->reviews->add($review);
+            $review->setBook($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReview(Review $review): static
+    {
+        if ($this->reviews->removeElement($review)) {
+            // set the owning side to null (unless already changed)
+            if ($review->getBook() === $this) {
+                $review->setBook(null);
             }
         }
 
