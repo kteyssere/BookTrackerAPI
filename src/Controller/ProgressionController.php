@@ -22,9 +22,34 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use OpenApi\Attributes as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Security\Core\Security;
 
 class ProgressionController extends AbstractController
 {
+
+        /** 
+     * Renvoie la derniere entée progression
+     * 
+     * @param ProgressionRepository $repository
+     * @param SerializerInterface $serializer
+     * @param TagAwareCacheInterface $cache
+     * @param Security $security
+     * @return JsonResponse
+     */
+    #[Route('/api/progression/latest', name: 'progression.getLatest', methods: ['GET'])]
+    public function getLatestProgression(ProgressionRepository $repository, SerializerInterface $serializer, TagAwareCacheInterface $cache, Security $security): JsonResponse
+    {
+        $idCache = "getLatestProgression";
+        $cache->invalidateTags(["latestProgressionCache"]);
+        $jsonProgression = $cache->get($idCache, function (ItemInterface $item) use ($repository, $serializer, $security) {
+            $item->tag("latestProgressionCache");
+            $user = $security->getUser();
+            $progressions = $repository->findOneByLatest($user->getUserIdentifier());
+            return $serializer->serialize($progressions, 'json',  ['groups' => "getAll"]);
+        });
+        
+        return new JsonResponse($jsonProgression, 200, [], true);
+    }
 
     /**
      * Create new progression entry
@@ -157,6 +182,7 @@ class ProgressionController extends AbstractController
         return new JsonResponse($jsonProgressions, 200, [], true);
     }
 
+
     /** 
      * Renvoie l'entée progression
      * 
@@ -173,4 +199,7 @@ class ProgressionController extends AbstractController
 
         return new JsonResponse($jsonProgression, 200, [], true);
     }
+
+
+
 }
