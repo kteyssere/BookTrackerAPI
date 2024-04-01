@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Progression;
 use App\Repository\ProgressionRepository;
+use App\Repository\BookRepository;
 use App\Entity\Picture;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,6 +24,7 @@ use OpenApi\Attributes as OA;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\Security\Core\Security;
+use App\Repository\PersonaRepository;
 
 class ProgressionController extends AbstractController
 {
@@ -60,17 +62,29 @@ class ProgressionController extends AbstractController
      * @param UrlGeneratorInterface $urlgenerator
      * @param ValidatorInterface $validator
      * @param TagAwareCacheInterface $cache
+     * @param Security $security
+     * @param PersonaRepository $personaRepository
+     * @param BookRepository $bookRepository
      * @return JsonResponse
      */
     #[Route('/api/progression', name: 'progression.post', methods: ['POST'])]
-    #[IsGranted("USER")]
+   
 
-    public function createProgression(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache): JsonResponse
+    public function createProgression(Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, UrlGeneratorInterface $urlgenerator, ValidatorInterface $validator, TagAwareCacheInterface $cache, Security $security, PersonaRepository $personaRepository, BookRepository $bookRepository): JsonResponse
     {
+        $arrResponse = $request->toArray();
+
+        $idBook = $arrResponse["idBook"];
         $progression = $serializer->deserialize($request->getContent(), Progression::class, "json");
         $dateNow = new DateTime();
         
-        $progression->setStatus('on')
+        $user = $security->getUser();
+        $persona = $personaRepository->findByUser($user->getUserIdentifier());
+        $book = $bookRepository->find($idBook);
+
+        $progression->setPersona($persona)
+        ->setBook($book)
+        ->setStatus('on')
         ->setCreatedAt($dateNow)
         ->setUpdatedAt($dateNow);
         
@@ -100,7 +114,7 @@ class ProgressionController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/api/progression/{id}', name: 'progression.put', methods: ['PUT'])]
-    #[IsGranted("USER")]
+   
 
     public function updateProgression(Progression $progression, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
@@ -126,7 +140,7 @@ class ProgressionController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/api/progression/{id}', name: 'progression.delete', methods: ['DELETE'])]
-    #[IsGranted("USER")]
+    
 
     public function deleteProgression(Progression $progression, Request $request, SerializerInterface $serializer, EntityManagerInterface $entityManager, TagAwareCacheInterface $cache): JsonResponse
     {
