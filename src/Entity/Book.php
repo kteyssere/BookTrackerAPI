@@ -106,6 +106,7 @@ class Book
     private Collection $categories;
 
     #[ORM\OneToMany(mappedBy: 'book', targetEntity: Progression::class)]
+    #[Groups(["getAll"])]
     private Collection $progressions;
 
     #[ORM\OneToMany(mappedBy: 'book', targetEntity: Review::class)]

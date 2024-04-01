@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ProgressionRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ProgressionRepository::class)]
 class Progression
@@ -15,15 +16,18 @@ class Progression
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(["getAll"])]
     private ?float $progress = 0;
 
 
     #[ORM\ManyToOne(inversedBy: 'progressions')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["getAllProgression"])]
     private ?Book $book = null;
 
     #[ORM\ManyToOne(inversedBy: 'progressions')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["getAll"])]
     private ?Persona $persona = null;
 
     #[ORM\Column(length: 25)]
